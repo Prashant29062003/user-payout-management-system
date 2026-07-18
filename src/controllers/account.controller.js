@@ -17,7 +17,9 @@ export async function getAccountLedger(req, res, next) {
   try {
     const { accountId } = parseSchema(accountIdParamsSchema, req.params);
     await accountService.getAccountById(accountId);
-    const entries = await ledgerRepository.listHistory(accountId, { orderBy: { createdAt: 'asc' } });
+    const entries = await ledgerRepository.listHistory(accountId, {
+      orderBy: { createdAt: 'asc' },
+    });
     res.status(200).json(ApiResponse.success(entries, 'Account ledger fetched'));
   } catch (error) {
     next(error);

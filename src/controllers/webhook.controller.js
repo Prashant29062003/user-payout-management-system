@@ -10,7 +10,10 @@ import { parseSchema, paymentProviderWebhookSchema } from '../shared/validators.
 
 export async function handlePaymentProviderWebhook(req, res, next) {
   try {
-    const { paymentAttemptId, status, failureReason } = parseSchema(paymentProviderWebhookSchema, req.body);
+    const { paymentAttemptId, status, failureReason } = parseSchema(
+      paymentProviderWebhookSchema,
+      req.body
+    );
 
     if (status === 'SUCCESS') {
       const result = await withTransaction(async (tx) => {
@@ -19,18 +22,32 @@ export async function handlePaymentProviderWebhook(req, res, next) {
           throw new ValidationError('Payment attempt is not associated with a withdrawal');
         }
 
-        const withdrawal = await withdrawalService.getWithdrawalById(paymentAttempt.withdrawalId, tx);
+        const withdrawal = await withdrawalService.getWithdrawalById(
+          paymentAttempt.withdrawalId,
+          tx
+        );
         await withdrawalService.markSucceeded(withdrawal.id, tx);
 
-        const existingLedgerEntries = await ledgerService.findEntriesByReference('WITHDRAWAL', withdrawal.id, tx);
-        const existingWithdrawalEntry = existingLedgerEntries.find((entry) => entry.entryType === LedgerEntryType.WITHDRAWAL);
+        const existingLedgerEntries = await ledgerService.findEntriesByReference(
+          'WITHDRAWAL',
+          withdrawal.id,
+          tx
+        );
+        const existingWithdrawalEntry = existingLedgerEntries.find(
+          (entry) => entry.entryType === LedgerEntryType.WITHDRAWAL
+        );
 
-        const ledgerEntry = existingWithdrawalEntry || await ledgerService.recordWithdrawal({
-          accountId: withdrawal.accountId,
-          amount: Number(withdrawal.amount),
-          currency: withdrawal.currency,
-          referenceId: withdrawal.id,
-        }, tx);
+        const ledgerEntry =
+          existingWithdrawalEntry ||
+          (await ledgerService.recordWithdrawal(
+            {
+              accountId: withdrawal.accountId,
+              amount: Number(withdrawal.amount),
+              currency: withdrawal.currency,
+              referenceId: withdrawal.id,
+            },
+            tx
+          ));
 
         return {
           paymentAttempt,

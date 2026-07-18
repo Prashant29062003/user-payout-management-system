@@ -9,11 +9,11 @@ jest.unstable_mockModule('../../src/shared/utils/index.js', () => ({
 }));
 
 let handlePaymentProviderWebhook;
-let utils;
 
 describe('WebhookController', () => {
   beforeAll(async () => {
-    ({ handlePaymentProviderWebhook } = await import('../../src/controllers/webhook.controller.js'));
+    ({ handlePaymentProviderWebhook } =
+      await import('../../src/controllers/webhook.controller.js'));
     utils = await import('../../src/shared/utils/index.js');
   });
 
@@ -22,9 +22,15 @@ describe('WebhookController', () => {
   });
 
   it('handles successful payment provider events', async () => {
-    jest.spyOn(paymentAttemptService, 'markSucceeded').mockResolvedValue({ id: 'attempt-1', withdrawalId: 'withdrawal-1' });
-    jest.spyOn(withdrawalService, 'getWithdrawalById').mockResolvedValue({ id: 'withdrawal-1', accountId: 'acct-1', amount: 100, currency: 'USD' });
-    jest.spyOn(withdrawalService, 'markSucceeded').mockResolvedValue({ id: 'withdrawal-1', status: 'SUCCESS' });
+    jest
+      .spyOn(paymentAttemptService, 'markSucceeded')
+      .mockResolvedValue({ id: 'attempt-1', withdrawalId: 'withdrawal-1' });
+    jest
+      .spyOn(withdrawalService, 'getWithdrawalById')
+      .mockResolvedValue({ id: 'withdrawal-1', accountId: 'acct-1', amount: 100, currency: 'USD' });
+    jest
+      .spyOn(withdrawalService, 'markSucceeded')
+      .mockResolvedValue({ id: 'withdrawal-1', status: 'SUCCESS' });
     jest.spyOn(ledgerService, 'findEntriesByReference').mockResolvedValue([]);
     jest.spyOn(ledgerService, 'recordWithdrawal').mockResolvedValue({ id: 'ledger-1' });
 
@@ -36,11 +42,19 @@ describe('WebhookController', () => {
 
     await handlePaymentProviderWebhook(req, res, next);
 
-    expect(paymentAttemptService.markSucceeded).toHaveBeenCalledWith('attempt-1', expect.anything());
+    expect(paymentAttemptService.markSucceeded).toHaveBeenCalledWith(
+      'attempt-1',
+      expect.anything()
+    );
     expect(withdrawalService.markSucceeded).toHaveBeenCalledWith('withdrawal-1', expect.anything());
     expect(ledgerService.recordWithdrawal).toHaveBeenCalledWith(
-      expect.objectContaining({ accountId: 'acct-1', amount: 100, currency: 'USD', referenceId: 'withdrawal-1' }),
-      expect.anything(),
+      expect.objectContaining({
+        accountId: 'acct-1',
+        amount: 100,
+        currency: 'USD',
+        referenceId: 'withdrawal-1',
+      }),
+      expect.anything()
     );
     expect(status).toHaveBeenCalledWith(200);
     expect(json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
@@ -58,7 +72,11 @@ describe('WebhookController', () => {
 
     await handlePaymentProviderWebhook(req, res, next);
 
-    expect(recoveryWorkflow.execute).toHaveBeenCalledWith({ paymentAttemptId: 'attempt-2', failureStatus: 'FAILED', failureReason: undefined });
+    expect(recoveryWorkflow.execute).toHaveBeenCalledWith({
+      paymentAttemptId: 'attempt-2',
+      failureStatus: 'FAILED',
+      failureReason: undefined,
+    });
     expect(status).toHaveBeenCalledWith(200);
     expect(json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
     expect(next).not.toHaveBeenCalled();

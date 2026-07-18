@@ -36,7 +36,9 @@ describe('AccountService', () => {
   it('throws when account by id is missing', async () => {
     mockRepository.findById.mockResolvedValue(null);
 
-    await expect(service.getAccountById('acct-1')).rejects.toThrow('Account with id acct-1 not found');
+    await expect(service.getAccountById('acct-1')).rejects.toThrow(
+      'Account with id acct-1 not found'
+    );
   });
 
   it('returns an account by user id', async () => {
@@ -51,7 +53,9 @@ describe('AccountService', () => {
   it('throws when account by user id is missing', async () => {
     mockRepository.findByUserId.mockResolvedValue(null);
 
-    await expect(service.getAccountByUserId('user-1')).rejects.toThrow('Account for user user-1 not found');
+    await expect(service.getAccountByUserId('user-1')).rejects.toThrow(
+      'Account for user user-1 not found'
+    );
   });
 
   it('updates an existing account', async () => {
@@ -68,7 +72,7 @@ describe('AccountService', () => {
     mockRepository.findById.mockResolvedValue(null);
 
     await expect(service.updateAccount('acct-1', { currency: 'USD' })).rejects.toThrow(
-      'Account with id acct-1 not found',
+      'Account with id acct-1 not found'
     );
   });
 
@@ -86,7 +90,7 @@ describe('AccountService', () => {
     mockRepository.findById.mockResolvedValue(null);
 
     await expect(service.updateAccountBalance('acct-1', 50)).rejects.toThrow(
-      'Account with id acct-1 not found',
+      'Account with id acct-1 not found'
     );
   });
 });

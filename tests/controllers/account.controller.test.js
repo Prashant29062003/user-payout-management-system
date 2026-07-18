@@ -8,7 +8,9 @@ describe('AccountController', () => {
   });
 
   it('returns account information', async () => {
-    jest.spyOn(accountService, 'getAccountById').mockResolvedValue({ id: 'acct-1', withdrawableBalance: 100 });
+    jest
+      .spyOn(accountService, 'getAccountById')
+      .mockResolvedValue({ id: 'acct-1', withdrawableBalance: 100 });
 
     const req = { params: { accountId: 'acct-1' } };
     const json = jest.fn();
@@ -23,7 +25,7 @@ describe('AccountController', () => {
       expect.objectContaining({
         success: true,
         data: expect.objectContaining({ id: 'acct-1' }),
-      }),
+      })
     );
     expect(next).not.toHaveBeenCalled();
   });
@@ -41,7 +43,9 @@ describe('AccountController', () => {
     await getAccountLedger(req, res, next);
 
     expect(status).toHaveBeenCalledWith(200);
-    expect(json).toHaveBeenCalledWith(expect.objectContaining({ success: true, data: [{ id: 'entry-1' }] }));
+    expect(json).toHaveBeenCalledWith(
+      expect.objectContaining({ success: true, data: [{ id: 'entry-1' }] })
+    );
     expect(next).not.toHaveBeenCalled();
   });
 });

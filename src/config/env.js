@@ -3,13 +3,11 @@ import { ensureString } from '../shared/utils/index.js';
 const requiredEnvironmentVariables = ['DATABASE_URL'];
 
 const missing = requiredEnvironmentVariables.filter(
-  (name) => !process.env[name] || !process.env[name].trim(),
+  (name) => !process.env[name] || !process.env[name].trim()
 );
 
 if (missing.length > 0) {
-  throw new Error(
-    `Missing required environment variables: ${missing.join(', ')}`,
-  );
+  throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
 }
 
 export const env = {

@@ -4,14 +4,12 @@ import { paymentAttemptService } from '../payment-attempts/service/payment-attem
 import { paymentProvider } from '../../providers/payment-provider/index.js';
 
 export class WithdrawalWorkflow {
-  constructor(
-    {
-      withdrawalServiceInstance = withdrawalService,
-      paymentAttemptServiceInstance = paymentAttemptService,
-      paymentProviderInstance = paymentProvider,
-      transactionRunner = withTransaction,
-    } = {}
-  ) {
+  constructor({
+    withdrawalServiceInstance = withdrawalService,
+    paymentAttemptServiceInstance = paymentAttemptService,
+    paymentProviderInstance = paymentProvider,
+    transactionRunner = withTransaction,
+  } = {}) {
     this.withdrawalService = withdrawalServiceInstance;
     this.paymentAttemptService = paymentAttemptServiceInstance;
     this.paymentProvider = paymentProviderInstance;
@@ -21,9 +19,15 @@ export class WithdrawalWorkflow {
   async execute({ accountId, userId, amount, currency, idempotencyKey = null }) {
     const result = await this.transactionRunner(async (tx) => {
       if (idempotencyKey) {
-        const existingAttempt = await this.paymentAttemptService.getAttemptByIdempotencyKey(idempotencyKey, tx);
+        const existingAttempt = await this.paymentAttemptService.getAttemptByIdempotencyKey(
+          idempotencyKey,
+          tx
+        );
         if (existingAttempt) {
-          const withdrawal = await this.withdrawalService.getWithdrawalById(existingAttempt.withdrawalId, tx);
+          const withdrawal = await this.withdrawalService.getWithdrawalById(
+            existingAttempt.withdrawalId,
+            tx
+          );
           return { withdrawal, paymentAttempt: existingAttempt, isIdempotentReplay: true };
         }
       }
@@ -36,7 +40,7 @@ export class WithdrawalWorkflow {
           currency,
           status: 'PENDING',
         },
-        tx,
+        tx
       );
 
       const paymentAttempt = await this.paymentAttemptService.startAttempt(
@@ -46,7 +50,7 @@ export class WithdrawalWorkflow {
           currency,
           idempotencyKey,
         },
-        tx,
+        tx
       );
 
       return { withdrawal, paymentAttempt, isIdempotentReplay: false };
@@ -59,7 +63,7 @@ export class WithdrawalWorkflow {
         await this.paymentAttemptService.attachProviderDetails(
           result.paymentAttempt.id,
           providerResult.provider,
-          providerResult.providerReference,
+          providerResult.providerReference
         );
       }
     }

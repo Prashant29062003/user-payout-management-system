@@ -7,15 +7,13 @@ import { SaleStatus } from '../../shared/constants/index.js';
 import { BusinessRuleViolationError } from '../../shared/errors/index.js';
 
 export class SaleReconciliationWorkflow {
-  constructor(
-    {
-      saleServiceInstance = saleService,
-      accountServiceInstance = accountService,
-      advancePayoutServiceInstance = advancePayoutService,
-      ledgerServiceInstance = ledgerService,
-      transactionRunner = withTransaction,
-    } = {}
-  ) {
+  constructor({
+    saleServiceInstance = saleService,
+    accountServiceInstance = accountService,
+    advancePayoutServiceInstance = advancePayoutService,
+    ledgerServiceInstance = ledgerService,
+    transactionRunner = withTransaction,
+  } = {}) {
     this.saleService = saleServiceInstance;
     this.accountService = accountServiceInstance;
     this.advancePayoutService = advancePayoutServiceInstance;
@@ -44,7 +42,7 @@ export class SaleReconciliationWorkflow {
             currency: sale.currency,
             referenceId: saleId,
           },
-          tx,
+          tx
         );
       }
 
@@ -80,7 +78,7 @@ export class SaleReconciliationWorkflow {
             currency: sale.currency,
             referenceId: saleId,
           },
-          tx,
+          tx
         );
       }
 

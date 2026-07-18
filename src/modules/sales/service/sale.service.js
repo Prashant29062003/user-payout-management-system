@@ -20,7 +20,9 @@ function validateStatusTransition(currentStatus, nextStatus) {
     }
   }
 
-  throw new BusinessRuleViolationError(`Cannot transition sale from ${currentStatus} to ${nextStatus}`);
+  throw new BusinessRuleViolationError(
+    `Cannot transition sale from ${currentStatus} to ${nextStatus}`
+  );
 }
 
 export class SaleService {

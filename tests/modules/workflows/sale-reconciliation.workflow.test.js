@@ -64,8 +64,14 @@ describe('SaleReconciliationWorkflow', () => {
 
     expect(mockTransactionRunner).toHaveBeenCalled();
     expect(mockSaleService.getSaleById).toHaveBeenCalledWith('sale-1', expect.any(Object));
-    expect(mockAccountService.getAccountByUserId).toHaveBeenCalledWith('user-1', expect.any(Object));
-    expect(mockAdvancePayoutService.findSuccessfulAdvanceForSale).toHaveBeenCalledWith('sale-1', expect.any(Object));
+    expect(mockAccountService.getAccountByUserId).toHaveBeenCalledWith(
+      'user-1',
+      expect.any(Object)
+    );
+    expect(mockAdvancePayoutService.findSuccessfulAdvanceForSale).toHaveBeenCalledWith(
+      'sale-1',
+      expect.any(Object)
+    );
     expect(mockLedgerService.recordSettlement).toHaveBeenCalledWith(
       {
         accountId: 'acct-1',
@@ -73,7 +79,7 @@ describe('SaleReconciliationWorkflow', () => {
         currency: 'USD',
         referenceId: 'sale-1',
       },
-      expect.any(Object),
+      expect.any(Object)
     );
     expect(mockSaleService.markApproved).toHaveBeenCalledWith('sale-1', expect.any(Object));
     expect(result).toEqual({
@@ -125,8 +131,14 @@ describe('SaleReconciliationWorkflow', () => {
 
     expect(mockTransactionRunner).toHaveBeenCalled();
     expect(mockSaleService.getSaleById).toHaveBeenCalledWith('sale-2', expect.any(Object));
-    expect(mockAccountService.getAccountByUserId).toHaveBeenCalledWith('user-2', expect.any(Object));
-    expect(mockAdvancePayoutService.findSuccessfulAdvanceForSale).toHaveBeenCalledWith('sale-2', expect.any(Object));
+    expect(mockAccountService.getAccountByUserId).toHaveBeenCalledWith(
+      'user-2',
+      expect.any(Object)
+    );
+    expect(mockAdvancePayoutService.findSuccessfulAdvanceForSale).toHaveBeenCalledWith(
+      'sale-2',
+      expect.any(Object)
+    );
     expect(mockLedgerService.recordRejectionAdjustment).toHaveBeenCalledWith(
       {
         accountId: 'acct-2',
@@ -134,7 +146,7 @@ describe('SaleReconciliationWorkflow', () => {
         currency: 'USD',
         referenceId: 'sale-2',
       },
-      expect.any(Object),
+      expect.any(Object)
     );
     expect(mockSaleService.markRejected).toHaveBeenCalledWith('sale-2', expect.any(Object));
     expect(result).toEqual({

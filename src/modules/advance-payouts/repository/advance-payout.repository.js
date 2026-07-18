@@ -19,7 +19,9 @@ export class AdvancePayoutRepository {
   }
 
   async findSuccessfulBySaleId(saleId) {
-    return this.tx.advancePayout.findFirst({ where: { saleId, status: AdvancePayoutStatus.SUCCESS } });
+    return this.tx.advancePayout.findFirst({
+      where: { saleId, status: AdvancePayoutStatus.SUCCESS },
+    });
   }
 
   async existsForSale(saleId) {

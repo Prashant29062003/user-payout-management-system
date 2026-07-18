@@ -30,7 +30,11 @@ describe('LedgerService', () => {
     const ledgerEntry = { id: 'entry-1', accountId: 'acct-1', amount: 100, currency: 'USD' };
     mockAppendEntry.mockResolvedValue(ledgerEntry);
 
-    const service = new LedgerService(MockLedgerRepository, mockProjectionService, mockTransactionRunner);
+    const service = new LedgerService(
+      MockLedgerRepository,
+      mockProjectionService,
+      mockTransactionRunner
+    );
 
     const result = await service.recordEntry({
       accountId: 'acct-1',
@@ -50,7 +54,12 @@ describe('LedgerService', () => {
       referenceType: 'SALE',
       referenceId: 'sale-1',
     });
-    expect(mockProjectionService.applyProjection).toHaveBeenCalledWith('acct-1', 100, 'USD', expect.any(Object));
+    expect(mockProjectionService.applyProjection).toHaveBeenCalledWith(
+      'acct-1',
+      100,
+      'USD',
+      expect.any(Object)
+    );
     expect(result).toEqual(ledgerEntry);
   });
 
@@ -58,7 +67,11 @@ describe('LedgerService', () => {
     const ledgerEntry = { id: 'entry-2', accountId: 'acct-1', amount: -50, currency: 'USD' };
     mockAppendEntry.mockResolvedValue(ledgerEntry);
 
-    const service = new LedgerService(MockLedgerRepository, mockProjectionService, mockTransactionRunner);
+    const service = new LedgerService(
+      MockLedgerRepository,
+      mockProjectionService,
+      mockTransactionRunner
+    );
 
     const result = await service.recordWithdrawal({
       accountId: 'acct-1',
@@ -67,11 +80,13 @@ describe('LedgerService', () => {
       referenceId: 'withdrawal-1',
     });
 
-    expect(mockAppendEntry).toHaveBeenCalledWith(expect.objectContaining({
-      entryType: LedgerEntryType.WITHDRAWAL,
-      referenceType: 'WITHDRAWAL',
-      referenceId: 'withdrawal-1',
-    }));
+    expect(mockAppendEntry).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entryType: LedgerEntryType.WITHDRAWAL,
+        referenceType: 'WITHDRAWAL',
+        referenceId: 'withdrawal-1',
+      })
+    );
     expect(result).toEqual(ledgerEntry);
   });
 });

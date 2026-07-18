@@ -49,7 +49,9 @@ describe('AdvancePayoutRepository', () => {
 
     const result = await repository.findSuccessfulBySaleId('sale-1');
 
-    expect(tx.advancePayout.findFirst).toHaveBeenCalledWith({ where: { saleId: 'sale-1', status: 'SUCCESS' } });
+    expect(tx.advancePayout.findFirst).toHaveBeenCalledWith({
+      where: { saleId: 'sale-1', status: 'SUCCESS' },
+    });
     expect(result).toEqual({ id: 'advance-1', status: 'SUCCESS' });
   });
 
@@ -65,7 +67,10 @@ describe('AdvancePayoutRepository', () => {
   it('updates advance payout status', async () => {
     const result = await repository.updateStatus('advance-1', 'PROCESSING');
 
-    expect(tx.advancePayout.update).toHaveBeenCalledWith({ where: { id: 'advance-1' }, data: { status: 'PROCESSING' } });
+    expect(tx.advancePayout.update).toHaveBeenCalledWith({
+      where: { id: 'advance-1' },
+      data: { status: 'PROCESSING' },
+    });
     expect(result).toEqual({ id: 'advance-1', status: 'PROCESSING' });
   });
 });

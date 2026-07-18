@@ -1,5 +1,13 @@
-import { runAdvancePayout, reconcileSale, createWithdrawal } from '../../src/controllers/workflows.controller.js';
-import { advancePayoutWorkflow, saleReconciliationWorkflow, withdrawalWorkflow } from '../../src/modules/workflows/index.js';
+import {
+  runAdvancePayout,
+  reconcileSale,
+  createWithdrawal,
+} from '../../src/controllers/workflows.controller.js';
+import {
+  advancePayoutWorkflow,
+  saleReconciliationWorkflow,
+  withdrawalWorkflow,
+} from '../../src/modules/workflows/index.js';
 
 describe('WorkflowsController', () => {
   afterEach(() => {
@@ -24,7 +32,9 @@ describe('WorkflowsController', () => {
   });
 
   it('approves a sale when reconcile action is approve', async () => {
-    jest.spyOn(saleReconciliationWorkflow, 'approveSale').mockResolvedValue({ sale: { id: 'sale-2', status: 'APPROVED' } });
+    jest
+      .spyOn(saleReconciliationWorkflow, 'approveSale')
+      .mockResolvedValue({ sale: { id: 'sale-2', status: 'APPROVED' } });
 
     const req = { params: { saleId: 'sale-2' }, body: { action: 'approve' } };
     const json = jest.fn();
@@ -41,7 +51,9 @@ describe('WorkflowsController', () => {
   });
 
   it('rejects a sale when reconcile action is reject', async () => {
-    jest.spyOn(saleReconciliationWorkflow, 'rejectSale').mockResolvedValue({ sale: { id: 'sale-3', status: 'REJECTED' } });
+    jest
+      .spyOn(saleReconciliationWorkflow, 'rejectSale')
+      .mockResolvedValue({ sale: { id: 'sale-3', status: 'REJECTED' } });
 
     const req = { params: { saleId: 'sale-3' }, body: { action: 'reject' } };
     const json = jest.fn();
@@ -58,9 +70,22 @@ describe('WorkflowsController', () => {
   });
 
   it('creates a withdrawal', async () => {
-    jest.spyOn(withdrawalWorkflow, 'execute').mockResolvedValue({ withdrawal: { id: 'withdrawal-1' }, paymentAttempt: { id: 'attempt-1' } });
+    jest
+      .spyOn(withdrawalWorkflow, 'execute')
+      .mockResolvedValue({
+        withdrawal: { id: 'withdrawal-1' },
+        paymentAttempt: { id: 'attempt-1' },
+      });
 
-    const req = { body: { accountId: 'acct-1', userId: 'user-1', amount: 75, currency: 'USD', idempotencyKey: 'idem-1' } };
+    const req = {
+      body: {
+        accountId: 'acct-1',
+        userId: 'user-1',
+        amount: 75,
+        currency: 'USD',
+        idempotencyKey: 'idem-1',
+      },
+    };
     const json = jest.fn();
     const status = jest.fn().mockReturnValue({ json });
     const res = { status };

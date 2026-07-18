@@ -43,7 +43,10 @@ describe('LedgerRepository', () => {
 
     const result = await repository.findByAccountId('acct-1');
 
-    expect(tx.ledgerEntry.findMany).toHaveBeenCalledWith({ where: { accountId: 'acct-1' }, orderBy: { createdAt: 'asc' } });
+    expect(tx.ledgerEntry.findMany).toHaveBeenCalledWith({
+      where: { accountId: 'acct-1' },
+      orderBy: { createdAt: 'asc' },
+    });
     expect(result).toEqual(entries);
   });
 

@@ -61,12 +61,25 @@ describe('RecoveryWorkflow', () => {
       transactionRunner: mockTransactionRunner,
     });
 
-    const result = await workflow.execute({ paymentAttemptId: 'attempt-1', failureStatus: PaymentStatus.FAILED });
+    const result = await workflow.execute({
+      paymentAttemptId: 'attempt-1',
+      failureStatus: PaymentStatus.FAILED,
+    });
 
     expect(mockTransactionRunner).toHaveBeenCalled();
-    expect(mockPaymentAttemptService.getAttemptById).toHaveBeenCalledWith('attempt-1', expect.any(Object));
-    expect(mockWithdrawalService.getWithdrawalById).toHaveBeenCalledWith('withdrawal-1', expect.any(Object));
-    expect(mockLedgerService.hasRecoveryForReference).toHaveBeenCalledWith('WITHDRAWAL', 'withdrawal-1', expect.any(Object));
+    expect(mockPaymentAttemptService.getAttemptById).toHaveBeenCalledWith(
+      'attempt-1',
+      expect.any(Object)
+    );
+    expect(mockWithdrawalService.getWithdrawalById).toHaveBeenCalledWith(
+      'withdrawal-1',
+      expect.any(Object)
+    );
+    expect(mockLedgerService.hasRecoveryForReference).toHaveBeenCalledWith(
+      'WITHDRAWAL',
+      'withdrawal-1',
+      expect.any(Object)
+    );
     expect(mockLedgerService.recordRecovery).toHaveBeenCalledWith(
       {
         accountId: 'acct-1',
@@ -74,12 +87,22 @@ describe('RecoveryWorkflow', () => {
         currency: 'USD',
         referenceId: 'withdrawal-1',
       },
-      expect.any(Object),
+      expect.any(Object)
     );
     expect(result).toEqual({
       alreadyRecovered: false,
-      withdrawal: { id: 'withdrawal-1', accountId: 'acct-1', amount: 100, currency: 'USD', status: 'FAILED' },
-      paymentAttempt: { id: 'attempt-1', withdrawalId: 'withdrawal-1', status: PaymentStatus.FAILED },
+      withdrawal: {
+        id: 'withdrawal-1',
+        accountId: 'acct-1',
+        amount: 100,
+        currency: 'USD',
+        status: 'FAILED',
+      },
+      paymentAttempt: {
+        id: 'attempt-1',
+        withdrawalId: 'withdrawal-1',
+        status: PaymentStatus.FAILED,
+      },
       ledgerEntry: {
         id: 'ledger-1',
         accountId: 'acct-1',
@@ -114,13 +137,26 @@ describe('RecoveryWorkflow', () => {
       transactionRunner: mockTransactionRunner,
     });
 
-    const result = await workflow.execute({ paymentAttemptId: 'attempt-2', failureStatus: PaymentStatus.FAILED });
+    const result = await workflow.execute({
+      paymentAttemptId: 'attempt-2',
+      failureStatus: PaymentStatus.FAILED,
+    });
 
     expect(mockLedgerService.recordRecovery).not.toHaveBeenCalled();
     expect(result).toEqual({
       alreadyRecovered: true,
-      withdrawal: { id: 'withdrawal-2', accountId: 'acct-2', amount: 75, currency: 'USD', status: 'FAILED' },
-      paymentAttempt: { id: 'attempt-2', withdrawalId: 'withdrawal-2', status: PaymentStatus.FAILED },
+      withdrawal: {
+        id: 'withdrawal-2',
+        accountId: 'acct-2',
+        amount: 75,
+        currency: 'USD',
+        status: 'FAILED',
+      },
+      paymentAttempt: {
+        id: 'attempt-2',
+        withdrawalId: 'withdrawal-2',
+        status: PaymentStatus.FAILED,
+      },
     });
   });
 
@@ -138,9 +174,9 @@ describe('RecoveryWorkflow', () => {
       transactionRunner: mockTransactionRunner,
     });
 
-    await expect(workflow.execute({ paymentAttemptId: 'attempt-3', failureStatus: PaymentStatus.FAILED })).rejects.toThrow(
-      BusinessRuleViolationError,
-    );
+    await expect(
+      workflow.execute({ paymentAttemptId: 'attempt-3', failureStatus: PaymentStatus.FAILED })
+    ).rejects.toThrow(BusinessRuleViolationError);
     expect(mockLedgerService.recordRecovery).not.toHaveBeenCalled();
   });
 
@@ -181,14 +217,27 @@ describe('RecoveryWorkflow', () => {
       transactionRunner: mockTransactionRunner,
     });
 
-    const result = await workflow.execute({ paymentAttemptId: 'attempt-4', failureStatus: PaymentStatus.FAILED });
+    const result = await workflow.execute({
+      paymentAttemptId: 'attempt-4',
+      failureStatus: PaymentStatus.FAILED,
+    });
 
-    expect(mockPaymentAttemptService.markFailed).toHaveBeenCalledWith('attempt-4', expect.any(Object));
-    expect(mockWithdrawalService.markFailed).toHaveBeenCalledWith('withdrawal-4', expect.any(Object));
+    expect(mockPaymentAttemptService.markFailed).toHaveBeenCalledWith(
+      'attempt-4',
+      expect.any(Object)
+    );
+    expect(mockWithdrawalService.markFailed).toHaveBeenCalledWith(
+      'withdrawal-4',
+      expect.any(Object)
+    );
     expect(result).toEqual({
       alreadyRecovered: false,
       withdrawal: { id: 'withdrawal-4', status: 'FAILED' },
-      paymentAttempt: { id: 'attempt-4', withdrawalId: 'withdrawal-4', status: PaymentStatus.FAILED },
+      paymentAttempt: {
+        id: 'attempt-4',
+        withdrawalId: 'withdrawal-4',
+        status: PaymentStatus.FAILED,
+      },
       ledgerEntry: {
         id: 'ledger-4',
         accountId: 'acct-4',

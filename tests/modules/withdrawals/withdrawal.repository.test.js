@@ -3,7 +3,9 @@ import { WithdrawalRepository } from '../../../src/modules/withdrawals/repositor
 describe('WithdrawalRepository', () => {
   const tx = {
     withdrawal: {
-      create: jest.fn().mockResolvedValue({ id: 'withdrawal-1', accountId: 'acct-1', status: 'PENDING' }),
+      create: jest
+        .fn()
+        .mockResolvedValue({ id: 'withdrawal-1', accountId: 'acct-1', status: 'PENDING' }),
       findUnique: jest.fn(),
       findMany: jest.fn(),
       findFirst: jest.fn(),
@@ -19,7 +21,13 @@ describe('WithdrawalRepository', () => {
   });
 
   it('creates a withdrawal', async () => {
-    const data = { accountId: 'acct-1', userId: 'user-1', amount: 100, currency: 'USD', status: 'PENDING' };
+    const data = {
+      accountId: 'acct-1',
+      userId: 'user-1',
+      amount: 100,
+      currency: 'USD',
+      status: 'PENDING',
+    };
     const result = await repository.create(data);
 
     expect(tx.withdrawal.create).toHaveBeenCalledWith({ data });
@@ -54,7 +62,9 @@ describe('WithdrawalRepository', () => {
   });
 
   it('finds pending withdrawals by account id', async () => {
-    tx.withdrawal.findMany.mockResolvedValue([{ id: 'withdrawal-1', accountId: 'acct-1', status: 'PENDING' }]);
+    tx.withdrawal.findMany.mockResolvedValue([
+      { id: 'withdrawal-1', accountId: 'acct-1', status: 'PENDING' },
+    ]);
 
     const result = await repository.findPendingByAccountId('acct-1');
 
@@ -87,7 +97,10 @@ describe('WithdrawalRepository', () => {
   it('updates withdrawal status', async () => {
     const result = await repository.updateStatus('withdrawal-1', 'PROCESSING');
 
-    expect(tx.withdrawal.update).toHaveBeenCalledWith({ where: { id: 'withdrawal-1' }, data: { status: 'PROCESSING' } });
+    expect(tx.withdrawal.update).toHaveBeenCalledWith({
+      where: { id: 'withdrawal-1' },
+      data: { status: 'PROCESSING' },
+    });
     expect(result).toEqual({ id: 'withdrawal-1', status: 'PROCESSING' });
   });
 

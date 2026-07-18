@@ -54,7 +54,10 @@ describe('SaleRepository', () => {
   it('updates sale status', async () => {
     const result = await repository.updateStatus('sale-1', 'APPROVED');
 
-    expect(tx.sale.update).toHaveBeenCalledWith({ where: { id: 'sale-1' }, data: { status: 'APPROVED' } });
+    expect(tx.sale.update).toHaveBeenCalledWith({
+      where: { id: 'sale-1' },
+      data: { status: 'APPROVED' },
+    });
     expect(result).toEqual({ id: 'sale-1', status: 'APPROVED' });
   });
 

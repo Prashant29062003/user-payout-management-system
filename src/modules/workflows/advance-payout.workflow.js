@@ -7,15 +7,13 @@ import { SaleStatus, AdvancePayoutStatus } from '../../shared/constants/index.js
 import { BusinessRuleViolationError } from '../../shared/errors/index.js';
 
 export class AdvancePayoutWorkflow {
-  constructor(
-    {
-      saleServiceInstance = saleService,
-      accountServiceInstance = accountService,
-      advancePayoutServiceInstance = advancePayoutService,
-      ledgerServiceInstance = ledgerService,
-      transactionRunner = withTransaction,
-    } = {}
-  ) {
+  constructor({
+    saleServiceInstance = saleService,
+    accountServiceInstance = accountService,
+    advancePayoutServiceInstance = advancePayoutService,
+    ledgerServiceInstance = ledgerService,
+    transactionRunner = withTransaction,
+  } = {}) {
     this.saleService = saleServiceInstance;
     this.accountService = accountServiceInstance;
     this.advancePayoutService = advancePayoutServiceInstance;
@@ -32,7 +30,9 @@ export class AdvancePayoutWorkflow {
 
       const eligible = await this.advancePayoutService.isEligibleForSale(saleId, tx);
       if (!eligible) {
-        throw new BusinessRuleViolationError(`A successful advance payout already exists for sale ${saleId}`);
+        throw new BusinessRuleViolationError(
+          `A successful advance payout already exists for sale ${saleId}`
+        );
       }
 
       const account = await this.accountService.getAccountByUserId(sale.userId, tx);
@@ -46,7 +46,7 @@ export class AdvancePayoutWorkflow {
           currency: sale.currency,
           status: AdvancePayoutStatus.SUCCESS,
         },
-        tx,
+        tx
       );
 
       const ledgerEntry = await this.ledgerService.recordAdvance(
@@ -56,7 +56,7 @@ export class AdvancePayoutWorkflow {
           currency: sale.currency,
           referenceId: saleId,
         },
-        tx,
+        tx
       );
 
       return {

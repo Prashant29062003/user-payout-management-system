@@ -1,5 +1,9 @@
 import { ApiResponse } from '../shared/utils/api-response.js';
-import { advancePayoutWorkflow, saleReconciliationWorkflow, withdrawalWorkflow } from '../modules/workflows/index.js';
+import {
+  advancePayoutWorkflow,
+  saleReconciliationWorkflow,
+  withdrawalWorkflow,
+} from '../modules/workflows/index.js';
 import {
   parseSchema,
   advancePayoutBodySchema,
@@ -23,9 +27,10 @@ export async function reconcileSale(req, res, next) {
     const { saleId } = parseSchema(saleIdParamsSchema, req.params);
     const { action } = parseSchema(reconcileSaleBodySchema, req.body);
 
-    const result = action === 'approve'
-      ? await saleReconciliationWorkflow.approveSale(saleId)
-      : await saleReconciliationWorkflow.rejectSale(saleId);
+    const result =
+      action === 'approve'
+        ? await saleReconciliationWorkflow.approveSale(saleId)
+        : await saleReconciliationWorkflow.rejectSale(saleId);
 
     res.status(200).json(ApiResponse.success(result, `Sale ${action}d successfully`));
   } catch (error) {

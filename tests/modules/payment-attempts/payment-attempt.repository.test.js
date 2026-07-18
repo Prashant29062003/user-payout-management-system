@@ -3,7 +3,9 @@ import { PaymentAttemptRepository } from '../../../src/modules/payment-attempts/
 describe('PaymentAttemptRepository', () => {
   const tx = {
     paymentAttempt: {
-      create: jest.fn().mockResolvedValue({ id: 'attempt-1', withdrawalId: 'withdrawal-1', status: 'PROCESSING' }),
+      create: jest
+        .fn()
+        .mockResolvedValue({ id: 'attempt-1', withdrawalId: 'withdrawal-1', status: 'PROCESSING' }),
       findUnique: jest.fn(),
       findMany: jest.fn(),
       findFirst: jest.fn(),
@@ -39,21 +41,30 @@ describe('PaymentAttemptRepository', () => {
 
     const result = await repository.findByIdempotencyKey('idem-key');
 
-    expect(tx.paymentAttempt.findUnique).toHaveBeenCalledWith({ where: { idempotencyKey: 'idem-key' } });
+    expect(tx.paymentAttempt.findUnique).toHaveBeenCalledWith({
+      where: { idempotencyKey: 'idem-key' },
+    });
     expect(result).toEqual({ id: 'attempt-1' });
   });
 
   it('finds payment attempts by withdrawal id', async () => {
-    tx.paymentAttempt.findMany.mockResolvedValue([{ id: 'attempt-1', withdrawalId: 'withdrawal-1' }]);
+    tx.paymentAttempt.findMany.mockResolvedValue([
+      { id: 'attempt-1', withdrawalId: 'withdrawal-1' },
+    ]);
 
     const result = await repository.findByWithdrawalId('withdrawal-1');
 
-    expect(tx.paymentAttempt.findMany).toHaveBeenCalledWith({ where: { withdrawalId: 'withdrawal-1' } });
+    expect(tx.paymentAttempt.findMany).toHaveBeenCalledWith({
+      where: { withdrawalId: 'withdrawal-1' },
+    });
     expect(result).toEqual([{ id: 'attempt-1', withdrawalId: 'withdrawal-1' }]);
   });
 
   it('finds the latest attempt for a withdrawal', async () => {
-    tx.paymentAttempt.findFirst.mockResolvedValue({ id: 'attempt-1', withdrawalId: 'withdrawal-1' });
+    tx.paymentAttempt.findFirst.mockResolvedValue({
+      id: 'attempt-1',
+      withdrawalId: 'withdrawal-1',
+    });
 
     const result = await repository.findLatestAttempt('withdrawal-1');
 
@@ -67,7 +78,10 @@ describe('PaymentAttemptRepository', () => {
   it('updates a payment attempt status', async () => {
     const result = await repository.updateStatus('attempt-1', 'SUCCESS');
 
-    expect(tx.paymentAttempt.update).toHaveBeenCalledWith({ where: { id: 'attempt-1' }, data: { status: 'SUCCESS' } });
+    expect(tx.paymentAttempt.update).toHaveBeenCalledWith({
+      where: { id: 'attempt-1' },
+      data: { status: 'SUCCESS' },
+    });
     expect(result).toEqual({ id: 'attempt-1', status: 'SUCCESS' });
   });
 });

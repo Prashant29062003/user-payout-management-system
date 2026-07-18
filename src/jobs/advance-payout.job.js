@@ -3,7 +3,10 @@ import { advancePayoutWorkflow } from '../modules/workflows/index.js';
 import { BusinessRuleViolationError } from '../shared/errors/index.js';
 
 export class AdvancePayoutJob {
-  constructor({ saleServiceInstance = saleService, advancePayoutWorkflowInstance = advancePayoutWorkflow } = {}) {
+  constructor({
+    saleServiceInstance = saleService,
+    advancePayoutWorkflowInstance = advancePayoutWorkflow,
+  } = {}) {
     this.saleService = saleServiceInstance;
     this.advancePayoutWorkflow = advancePayoutWorkflowInstance;
   }

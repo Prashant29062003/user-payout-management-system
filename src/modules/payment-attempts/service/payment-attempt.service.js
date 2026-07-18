@@ -15,8 +15,18 @@ function validateStatusTransition(currentStatus, nextStatus) {
   }
 
   const transitions = {
-    PENDING: [PaymentStatus.PROCESSING, PaymentStatus.FAILED, PaymentStatus.CANCELLED, PaymentStatus.REJECTED],
-    PROCESSING: [PaymentStatus.SUCCESS, PaymentStatus.FAILED, PaymentStatus.CANCELLED, PaymentStatus.REJECTED],
+    PENDING: [
+      PaymentStatus.PROCESSING,
+      PaymentStatus.FAILED,
+      PaymentStatus.CANCELLED,
+      PaymentStatus.REJECTED,
+    ],
+    PROCESSING: [
+      PaymentStatus.SUCCESS,
+      PaymentStatus.FAILED,
+      PaymentStatus.CANCELLED,
+      PaymentStatus.REJECTED,
+    ],
     FAILED: [PaymentStatus.PROCESSING, PaymentStatus.CANCELLED],
     SUCCESS: [],
     CANCELLED: [],
@@ -25,7 +35,9 @@ function validateStatusTransition(currentStatus, nextStatus) {
 
   const allowed = transitions[currentStatus] || [];
   if (!allowed.includes(nextStatus)) {
-    throw new BusinessRuleViolationError(`Cannot transition payment attempt from ${currentStatus} to ${nextStatus}`);
+    throw new BusinessRuleViolationError(
+      `Cannot transition payment attempt from ${currentStatus} to ${nextStatus}`
+    );
   }
 }
 

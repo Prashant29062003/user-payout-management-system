@@ -31,9 +31,17 @@ describe('WithdrawalWorkflow', () => {
   });
 
   it('creates a withdrawal and payment attempt inside a transaction', async () => {
-    mockWithdrawalService.createWithdrawal.mockResolvedValue({ id: 'withdrawal-1', accountId: 'acct-1', amount: 50 });
+    mockWithdrawalService.createWithdrawal.mockResolvedValue({
+      id: 'withdrawal-1',
+      accountId: 'acct-1',
+      amount: 50,
+    });
     mockPaymentAttemptService.getAttemptByIdempotencyKey.mockResolvedValue(null);
-    mockPaymentAttemptService.startAttempt.mockResolvedValue({ id: 'attempt-1', withdrawalId: 'withdrawal-1', amount: 50 });
+    mockPaymentAttemptService.startAttempt.mockResolvedValue({
+      id: 'attempt-1',
+      withdrawalId: 'withdrawal-1',
+      amount: 50,
+    });
 
     const workflow = new WithdrawalWorkflow({
       withdrawalServiceInstance: mockWithdrawalService,
@@ -51,7 +59,10 @@ describe('WithdrawalWorkflow', () => {
     });
 
     expect(mockTransactionRunner).toHaveBeenCalled();
-    expect(mockPaymentAttemptService.getAttemptByIdempotencyKey).toHaveBeenCalledWith('idem-1', expect.any(Object));
+    expect(mockPaymentAttemptService.getAttemptByIdempotencyKey).toHaveBeenCalledWith(
+      'idem-1',
+      expect.any(Object)
+    );
     expect(mockWithdrawalService.createWithdrawal).toHaveBeenCalledWith(
       {
         accountId: 'acct-1',
@@ -60,7 +71,7 @@ describe('WithdrawalWorkflow', () => {
         currency: 'USD',
         status: 'PENDING',
       },
-      expect.any(Object),
+      expect.any(Object)
     );
     expect(mockPaymentAttemptService.startAttempt).toHaveBeenCalledWith(
       {
@@ -69,7 +80,7 @@ describe('WithdrawalWorkflow', () => {
         currency: 'USD',
         idempotencyKey: 'idem-1',
       },
-      expect.any(Object),
+      expect.any(Object)
     );
     expect(result).toEqual({
       withdrawal: { id: 'withdrawal-1', accountId: 'acct-1', amount: 50 },
@@ -84,8 +95,15 @@ describe('WithdrawalWorkflow', () => {
   });
 
   it('returns existing payment attempt and withdrawal when the same idempotency key is reused', async () => {
-    mockPaymentAttemptService.getAttemptByIdempotencyKey.mockResolvedValue({ id: 'attempt-2', withdrawalId: 'withdrawal-2' });
-    mockWithdrawalService.getWithdrawalById.mockResolvedValue({ id: 'withdrawal-2', accountId: 'acct-2', amount: 75 });
+    mockPaymentAttemptService.getAttemptByIdempotencyKey.mockResolvedValue({
+      id: 'attempt-2',
+      withdrawalId: 'withdrawal-2',
+    });
+    mockWithdrawalService.getWithdrawalById.mockResolvedValue({
+      id: 'withdrawal-2',
+      accountId: 'acct-2',
+      amount: 75,
+    });
 
     const workflow = new WithdrawalWorkflow({
       withdrawalServiceInstance: mockWithdrawalService,
@@ -103,7 +121,10 @@ describe('WithdrawalWorkflow', () => {
     });
 
     expect(mockTransactionRunner).toHaveBeenCalled();
-    expect(mockPaymentAttemptService.getAttemptByIdempotencyKey).toHaveBeenCalledWith('idem-2', expect.any(Object));
+    expect(mockPaymentAttemptService.getAttemptByIdempotencyKey).toHaveBeenCalledWith(
+      'idem-2',
+      expect.any(Object)
+    );
     expect(mockWithdrawalService.createWithdrawal).not.toHaveBeenCalled();
     expect(mockPaymentAttemptService.startAttempt).not.toHaveBeenCalled();
     expect(result).toEqual({
@@ -114,7 +135,11 @@ describe('WithdrawalWorkflow', () => {
 
   it('propagates errors when payment attempt creation fails', async () => {
     mockPaymentAttemptService.getAttemptByIdempotencyKey.mockResolvedValue(null);
-    mockWithdrawalService.createWithdrawal.mockResolvedValue({ id: 'withdrawal-3', accountId: 'acct-3', amount: 150 });
+    mockWithdrawalService.createWithdrawal.mockResolvedValue({
+      id: 'withdrawal-3',
+      accountId: 'acct-3',
+      amount: 150,
+    });
     mockPaymentAttemptService.startAttempt.mockRejectedValue(new Error('Provider request failed'));
 
     const workflow = new WithdrawalWorkflow({
@@ -131,7 +156,7 @@ describe('WithdrawalWorkflow', () => {
         amount: 150,
         currency: 'USD',
         idempotencyKey: 'idem-3',
-      }),
+      })
     ).rejects.toThrow('Provider request failed');
 
     expect(mockWithdrawalService.createWithdrawal).toHaveBeenCalled();

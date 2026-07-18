@@ -68,8 +68,14 @@ describe('AdvancePayoutWorkflow', () => {
 
     expect(mockTransactionRunner).toHaveBeenCalled();
     expect(mockSaleService.getSaleById).toHaveBeenCalledWith('sale-1', expect.any(Object));
-    expect(mockAdvancePayoutService.isEligibleForSale).toHaveBeenCalledWith('sale-1', expect.any(Object));
-    expect(mockAccountService.getAccountByUserId).toHaveBeenCalledWith('user-1', expect.any(Object));
+    expect(mockAdvancePayoutService.isEligibleForSale).toHaveBeenCalledWith(
+      'sale-1',
+      expect.any(Object)
+    );
+    expect(mockAccountService.getAccountByUserId).toHaveBeenCalledWith(
+      'user-1',
+      expect.any(Object)
+    );
     expect(mockAdvancePayoutService.createAdvancePayout).toHaveBeenCalledWith(
       {
         saleId: 'sale-1',
@@ -77,7 +83,7 @@ describe('AdvancePayoutWorkflow', () => {
         currency: 'USD',
         status: AdvancePayoutStatus.SUCCESS,
       },
-      expect.any(Object),
+      expect.any(Object)
     );
     expect(mockLedgerService.recordAdvance).toHaveBeenCalledWith(
       {
@@ -86,7 +92,7 @@ describe('AdvancePayoutWorkflow', () => {
         currency: 'USD',
         referenceId: 'sale-1',
       },
-      expect.any(Object),
+      expect.any(Object)
     );
     expect(result).toEqual({
       sale: {

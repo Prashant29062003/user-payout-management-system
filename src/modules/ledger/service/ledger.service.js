@@ -4,7 +4,11 @@ import { projectionService } from './projection.service.js';
 import { LedgerEntryType } from '../../../shared/constants/index.js';
 
 export class LedgerService {
-  constructor(repositoryClass = LedgerRepository, projection = projectionService, transactionRunner = withTransaction) {
+  constructor(
+    repositoryClass = LedgerRepository,
+    projection = projectionService,
+    transactionRunner = withTransaction
+  ) {
     this.repositoryClass = repositoryClass;
     this.projection = projection;
     this.transactionRunner = transactionRunner;
@@ -16,7 +20,12 @@ export class LedgerService {
       const projectionService = this.projection;
 
       const ledgerEntry = await repository.appendEntry(entry);
-      await projectionService.applyProjection(entry.accountId, Number(entry.amount), entry.currency, tx);
+      await projectionService.applyProjection(
+        entry.accountId,
+        Number(entry.amount),
+        entry.currency,
+        tx
+      );
       return ledgerEntry;
     }
 
@@ -25,49 +34,69 @@ export class LedgerService {
       const projectionService = this.projection;
 
       const ledgerEntry = await repository.appendEntry(entry);
-      await projectionService.applyProjection(entry.accountId, Number(entry.amount), entry.currency, transaction);
+      await projectionService.applyProjection(
+        entry.accountId,
+        Number(entry.amount),
+        entry.currency,
+        transaction
+      );
       return ledgerEntry;
     });
   }
 
   async recordAdvance(entry, tx = null) {
-    return this.recordEntry({
-      ...entry,
-      entryType: LedgerEntryType.ADVANCE,
-      referenceType: entry.referenceType ?? 'SALE',
-    }, tx);
+    return this.recordEntry(
+      {
+        ...entry,
+        entryType: LedgerEntryType.ADVANCE,
+        referenceType: entry.referenceType ?? 'SALE',
+      },
+      tx
+    );
   }
 
   async recordSettlement(entry, tx = null) {
-    return this.recordEntry({
-      ...entry,
-      entryType: LedgerEntryType.SETTLEMENT,
-      referenceType: entry.referenceType ?? 'SALE',
-    }, tx);
+    return this.recordEntry(
+      {
+        ...entry,
+        entryType: LedgerEntryType.SETTLEMENT,
+        referenceType: entry.referenceType ?? 'SALE',
+      },
+      tx
+    );
   }
 
   async recordRejectionAdjustment(entry, tx = null) {
-    return this.recordEntry({
-      ...entry,
-      entryType: LedgerEntryType.REJECTION_ADJUSTMENT,
-      referenceType: entry.referenceType ?? 'SALE',
-    }, tx);
+    return this.recordEntry(
+      {
+        ...entry,
+        entryType: LedgerEntryType.REJECTION_ADJUSTMENT,
+        referenceType: entry.referenceType ?? 'SALE',
+      },
+      tx
+    );
   }
 
   async recordWithdrawal(entry, tx = null) {
-    return this.recordEntry({
-      ...entry,
-      entryType: LedgerEntryType.WITHDRAWAL,
-      referenceType: entry.referenceType ?? 'WITHDRAWAL',
-    }, tx);
+    return this.recordEntry(
+      {
+        ...entry,
+        entryType: LedgerEntryType.WITHDRAWAL,
+        referenceType: entry.referenceType ?? 'WITHDRAWAL',
+      },
+      tx
+    );
   }
 
   async recordRecovery(entry, tx = null) {
-    return this.recordEntry({
-      ...entry,
-      entryType: LedgerEntryType.WITHDRAWAL_RECOVERY,
-      referenceType: entry.referenceType ?? 'WITHDRAWAL',
-    }, tx);
+    return this.recordEntry(
+      {
+        ...entry,
+        entryType: LedgerEntryType.WITHDRAWAL_RECOVERY,
+        referenceType: entry.referenceType ?? 'WITHDRAWAL',
+      },
+      tx
+    );
   }
 
   async findEntriesByReference(referenceType, referenceId, tx = null) {

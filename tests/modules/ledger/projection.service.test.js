@@ -5,7 +5,9 @@ describe('ProjectionService', () => {
     const account = { withdrawableBalance: 0, recoveryBalance: 10 };
     const mockAccountRepo = {
       findById: jest.fn().mockResolvedValue(account),
-      updateBalances: jest.fn().mockResolvedValue({ id: 'acct-1', withdrawableBalance: 20, recoveryBalance: 0 }),
+      updateBalances: jest
+        .fn()
+        .mockResolvedValue({ id: 'acct-1', withdrawableBalance: 20, recoveryBalance: 0 }),
     };
     const repositoryClass = jest.fn(() => mockAccountRepo);
     const service = new ProjectionService(repositoryClass);
@@ -24,7 +26,9 @@ describe('ProjectionService', () => {
     const account = { withdrawableBalance: 25, recoveryBalance: 0 };
     const mockAccountRepo = {
       findById: jest.fn().mockResolvedValue(account),
-      updateBalances: jest.fn().mockResolvedValue({ id: 'acct-1', withdrawableBalance: 0, recoveryBalance: 15 }),
+      updateBalances: jest
+        .fn()
+        .mockResolvedValue({ id: 'acct-1', withdrawableBalance: 0, recoveryBalance: 15 }),
     };
     const repositoryClass = jest.fn(() => mockAccountRepo);
     const service = new ProjectionService(repositoryClass);
@@ -47,7 +51,9 @@ describe('ProjectionService', () => {
     const repositoryClass = jest.fn(() => mockAccountRepo);
     const service = new ProjectionService(repositoryClass);
 
-    await expect(service.applyProjection('acct-1', 10, 'USD')).rejects.toThrow('Account with id acct-1 not found');
+    await expect(service.applyProjection('acct-1', 10, 'USD')).rejects.toThrow(
+      'Account with id acct-1 not found'
+    );
     expect(mockAccountRepo.updateBalances).not.toHaveBeenCalled();
   });
 });

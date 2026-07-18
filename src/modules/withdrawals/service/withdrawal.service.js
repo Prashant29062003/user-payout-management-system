@@ -17,7 +17,11 @@ function validateStatusTransition(currentStatus, nextStatus) {
   }
 
   const transitions = {
-    [WithdrawalStatus.PENDING]: [WithdrawalStatus.PROCESSING, WithdrawalStatus.CANCELLED, WithdrawalStatus.FAILED],
+    [WithdrawalStatus.PENDING]: [
+      WithdrawalStatus.PROCESSING,
+      WithdrawalStatus.CANCELLED,
+      WithdrawalStatus.FAILED,
+    ],
     [WithdrawalStatus.PROCESSING]: [WithdrawalStatus.SUCCESS, WithdrawalStatus.FAILED],
     [WithdrawalStatus.FAILED]: [WithdrawalStatus.PROCESSING],
     [WithdrawalStatus.SUCCESS]: [],
@@ -27,7 +31,9 @@ function validateStatusTransition(currentStatus, nextStatus) {
 
   const allowed = transitions[currentStatus] || [];
   if (!allowed.includes(nextStatus)) {
-    throw new BusinessRuleViolationError(`Cannot transition withdrawal from ${currentStatus} to ${nextStatus}`);
+    throw new BusinessRuleViolationError(
+      `Cannot transition withdrawal from ${currentStatus} to ${nextStatus}`
+    );
   }
 }
 
@@ -41,7 +47,7 @@ export class WithdrawalService {
   constructor(
     repository = withdrawalRepository,
     accountRepositoryClass = AccountRepository,
-    transactionRunner = withTransaction,
+    transactionRunner = withTransaction
   ) {
     this.repository = repository;
     this.accountRepositoryClass = accountRepositoryClass;
@@ -53,12 +59,13 @@ export class WithdrawalService {
     validateStatus(status);
     validateAmount(attributes.amount);
 
-
     if (tx) {
       return this.createWithdrawalInTransaction(attributes, tx);
     }
 
-    return this.transactionRunner(async (transaction) => this.createWithdrawalInTransaction(attributes, transaction));
+    return this.transactionRunner(async (transaction) =>
+      this.createWithdrawalInTransaction(attributes, transaction)
+    );
   }
 
   async createWithdrawalInTransaction(attributes, tx) {
@@ -76,16 +83,22 @@ export class WithdrawalService {
     }
 
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const recentWithdrawals = await withdrawalRepository.findRecentByAccountId(attributes.accountId, since);
+    const recentWithdrawals = await withdrawalRepository.findRecentByAccountId(
+      attributes.accountId,
+      since
+    );
     if (recentWithdrawals.length > 0) {
-      throw new BusinessRuleViolationError('A withdrawal was already created for this account in the last 24 hours');
+      throw new BusinessRuleViolationError(
+        'A withdrawal was already created for this account in the last 24 hours'
+      );
     }
 
     return withdrawalRepository.create({
       ...attributes,
       status,
     });
-  }  async getWithdrawalById(withdrawalId, tx = null) {
+  }
+  async getWithdrawalById(withdrawalId, tx = null) {
     const repository = tx ? new this.repository.constructor(tx) : this.repository;
     const withdrawal = await repository.findById(withdrawalId);
     if (!withdrawal) {

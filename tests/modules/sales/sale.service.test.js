@@ -22,7 +22,10 @@ describe('SaleService', () => {
 
     const result = await service.createSale(saleInput);
 
-    expect(mockRepository.create).toHaveBeenCalledWith({ ...saleInput, status: SaleStatus.PENDING });
+    expect(mockRepository.create).toHaveBeenCalledWith({
+      ...saleInput,
+      status: SaleStatus.PENDING,
+    });
     expect(result).toEqual({ id: 'sale-1', status: 'PENDING', ...saleInput });
   });
 
@@ -77,21 +80,30 @@ describe('SaleService', () => {
   it('throws when approving an already rejected sale', async () => {
     mockRepository.findById.mockResolvedValue({ id: 'sale-1', status: SaleStatus.REJECTED });
 
-    await expect(service.markApproved('sale-1')).rejects.toThrow('Cannot transition sale from REJECTED to APPROVED');
+    await expect(service.markApproved('sale-1')).rejects.toThrow(
+      'Cannot transition sale from REJECTED to APPROVED'
+    );
     expect(mockRepository.updateStatus).not.toHaveBeenCalled();
   });
 
   it('throws when rejecting an already approved sale', async () => {
     mockRepository.findById.mockResolvedValue({ id: 'sale-1', status: SaleStatus.APPROVED });
 
-    await expect(service.markRejected('sale-1')).rejects.toThrow('Cannot transition sale from APPROVED to REJECTED');
+    await expect(service.markRejected('sale-1')).rejects.toThrow(
+      'Cannot transition sale from APPROVED to REJECTED'
+    );
     expect(mockRepository.updateStatus).not.toHaveBeenCalled();
   });
 
   it('throws when creating a sale with invalid status', async () => {
-    await expect(service.createSale({ userId: 'user-1', totalEarnings: 100, currency: 'USD', status: 'INVALID' })).rejects.toThrow(
-      'Invalid sale status: INVALID',
-    );
+    await expect(
+      service.createSale({
+        userId: 'user-1',
+        totalEarnings: 100,
+        currency: 'USD',
+        status: 'INVALID',
+      })
+    ).rejects.toThrow('Invalid sale status: INVALID');
     expect(mockRepository.create).not.toHaveBeenCalled();
   });
 });

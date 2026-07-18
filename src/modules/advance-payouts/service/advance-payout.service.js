@@ -15,7 +15,11 @@ function validateStatusTransition(currentStatus, nextStatus) {
   }
 
   const validTransitions = {
-    [AdvancePayoutStatus.PENDING]: [AdvancePayoutStatus.PROCESSING, AdvancePayoutStatus.SUCCESS, AdvancePayoutStatus.FAILED],
+    [AdvancePayoutStatus.PENDING]: [
+      AdvancePayoutStatus.PROCESSING,
+      AdvancePayoutStatus.SUCCESS,
+      AdvancePayoutStatus.FAILED,
+    ],
     [AdvancePayoutStatus.PROCESSING]: [AdvancePayoutStatus.SUCCESS, AdvancePayoutStatus.FAILED],
     [AdvancePayoutStatus.FAILED]: [AdvancePayoutStatus.PROCESSING],
     [AdvancePayoutStatus.SUCCESS]: [],
@@ -23,7 +27,9 @@ function validateStatusTransition(currentStatus, nextStatus) {
 
   const allowed = validTransitions[currentStatus] || [];
   if (!allowed.includes(nextStatus)) {
-    throw new BusinessRuleViolationError(`Cannot transition advance payout from ${currentStatus} to ${nextStatus}`);
+    throw new BusinessRuleViolationError(
+      `Cannot transition advance payout from ${currentStatus} to ${nextStatus}`
+    );
   }
 }
 
@@ -39,7 +45,9 @@ export class AdvancePayoutService {
     const repository = tx ? new this.repository.constructor(tx) : this.repository;
     const existingSuccess = await repository.findSuccessfulBySaleId(attributes.saleId);
     if (existingSuccess) {
-      throw new BusinessRuleViolationError(`A successful advance payout already exists for sale ${attributes.saleId}`);
+      throw new BusinessRuleViolationError(
+        `A successful advance payout already exists for sale ${attributes.saleId}`
+      );
     }
 
     return repository.create({ ...attributes, status });

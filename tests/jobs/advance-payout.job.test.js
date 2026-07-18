@@ -15,12 +15,15 @@ describe('AdvancePayoutJob', () => {
   });
 
   it('processes pending sales and returns success summary', async () => {
-    mockSaleService.listPendingSales.mockResolvedValue([
-      { id: 'sale-1' },
-      { id: 'sale-2' },
-    ]);
-    mockAdvancePayoutWorkflow.execute.mockResolvedValueOnce({ advancePayout: { id: 'advance-1' }, ledgerEntry: { id: 'ledger-1' } });
-    mockAdvancePayoutWorkflow.execute.mockResolvedValueOnce({ advancePayout: { id: 'advance-2' }, ledgerEntry: { id: 'ledger-2' } });
+    mockSaleService.listPendingSales.mockResolvedValue([{ id: 'sale-1' }, { id: 'sale-2' }]);
+    mockAdvancePayoutWorkflow.execute.mockResolvedValueOnce({
+      advancePayout: { id: 'advance-1' },
+      ledgerEntry: { id: 'ledger-1' },
+    });
+    mockAdvancePayoutWorkflow.execute.mockResolvedValueOnce({
+      advancePayout: { id: 'advance-2' },
+      ledgerEntry: { id: 'ledger-2' },
+    });
 
     const job = new AdvancePayoutJob({
       saleServiceInstance: mockSaleService,
@@ -49,7 +52,9 @@ describe('AdvancePayoutJob', () => {
 
   it('skips sales that violate business rules and continues processing', async () => {
     mockSaleService.listPendingSales.mockResolvedValue([{ id: 'sale-3' }]);
-    mockAdvancePayoutWorkflow.execute.mockRejectedValueOnce(new BusinessRuleViolationError('Advance already exists'));
+    mockAdvancePayoutWorkflow.execute.mockRejectedValueOnce(
+      new BusinessRuleViolationError('Advance already exists')
+    );
 
     const job = new AdvancePayoutJob({
       saleServiceInstance: mockSaleService,

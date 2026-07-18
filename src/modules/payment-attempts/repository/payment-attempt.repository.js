@@ -1,5 +1,4 @@
 import { db } from '../../../config/db.js';
-import { PaymentStatus } from '../../../shared/constants/index.js';
 
 export class PaymentAttemptRepository {
   constructor(tx = db) {

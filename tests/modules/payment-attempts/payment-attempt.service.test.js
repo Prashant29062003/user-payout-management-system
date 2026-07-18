@@ -19,19 +19,34 @@ describe('PaymentAttemptService', () => {
 
   it('starts a payment attempt with default processing status', async () => {
     const input = { withdrawalId: 'withdrawal-1', provider: 'stripe' };
-    mockRepository.create.mockResolvedValue({ id: 'attempt-1', ...input, status: PaymentStatus.PROCESSING });
+    mockRepository.create.mockResolvedValue({
+      id: 'attempt-1',
+      ...input,
+      status: PaymentStatus.PROCESSING,
+    });
 
     const result = await service.startAttempt(input);
 
-    expect(mockRepository.create).toHaveBeenCalledWith({ ...input, status: PaymentStatus.PROCESSING });
+    expect(mockRepository.create).toHaveBeenCalledWith({
+      ...input,
+      status: PaymentStatus.PROCESSING,
+    });
     expect(result).toEqual({ id: 'attempt-1', ...input, status: PaymentStatus.PROCESSING });
   });
 
   it('returns existing attempt when idempotency key is reused', async () => {
-    const existingAttempt = { id: 'attempt-1', idempotencyKey: 'idem-key', status: PaymentStatus.PROCESSING };
+    const existingAttempt = {
+      id: 'attempt-1',
+      idempotencyKey: 'idem-key',
+      status: PaymentStatus.PROCESSING,
+    };
     mockRepository.findByIdempotencyKey.mockResolvedValue(existingAttempt);
 
-    const result = await service.startAttempt({ withdrawalId: 'withdrawal-1', provider: 'stripe', idempotencyKey: 'idem-key' });
+    const result = await service.startAttempt({
+      withdrawalId: 'withdrawal-1',
+      provider: 'stripe',
+      idempotencyKey: 'idem-key',
+    });
 
     expect(mockRepository.findByIdempotencyKey).toHaveBeenCalledWith('idem-key');
     expect(mockRepository.create).not.toHaveBeenCalled();
@@ -40,13 +55,16 @@ describe('PaymentAttemptService', () => {
 
   it('throws when starting an attempt with invalid status', async () => {
     await expect(
-      service.startAttempt({ withdrawalId: 'withdrawal-1', provider: 'stripe', status: 'INVALID' }),
+      service.startAttempt({ withdrawalId: 'withdrawal-1', provider: 'stripe', status: 'INVALID' })
     ).rejects.toThrow('Invalid payment attempt status: INVALID');
     expect(mockRepository.create).not.toHaveBeenCalled();
   });
 
   it('retrieves a payment attempt by id', async () => {
-    mockRepository.findById.mockResolvedValue({ id: 'attempt-1', status: PaymentStatus.PROCESSING });
+    mockRepository.findById.mockResolvedValue({
+      id: 'attempt-1',
+      status: PaymentStatus.PROCESSING,
+    });
 
     const result = await service.getAttemptById('attempt-1');
 
@@ -57,12 +75,20 @@ describe('PaymentAttemptService', () => {
   it('throws when payment attempt is not found', async () => {
     mockRepository.findById.mockResolvedValue(null);
 
-    await expect(service.getAttemptById('attempt-1')).rejects.toThrow('Payment attempt with id attempt-1 not found');
+    await expect(service.getAttemptById('attempt-1')).rejects.toThrow(
+      'Payment attempt with id attempt-1 not found'
+    );
   });
 
   it('marks an attempt succeeded from processing', async () => {
-    mockRepository.findById.mockResolvedValue({ id: 'attempt-1', status: PaymentStatus.PROCESSING });
-    mockRepository.updateStatus.mockResolvedValue({ id: 'attempt-1', status: PaymentStatus.SUCCESS });
+    mockRepository.findById.mockResolvedValue({
+      id: 'attempt-1',
+      status: PaymentStatus.PROCESSING,
+    });
+    mockRepository.updateStatus.mockResolvedValue({
+      id: 'attempt-1',
+      status: PaymentStatus.SUCCESS,
+    });
 
     const result = await service.markSucceeded('attempt-1');
 
@@ -71,8 +97,14 @@ describe('PaymentAttemptService', () => {
   });
 
   it('marks an attempt failed from processing', async () => {
-    mockRepository.findById.mockResolvedValue({ id: 'attempt-1', status: PaymentStatus.PROCESSING });
-    mockRepository.updateStatus.mockResolvedValue({ id: 'attempt-1', status: PaymentStatus.FAILED });
+    mockRepository.findById.mockResolvedValue({
+      id: 'attempt-1',
+      status: PaymentStatus.PROCESSING,
+    });
+    mockRepository.updateStatus.mockResolvedValue({
+      id: 'attempt-1',
+      status: PaymentStatus.FAILED,
+    });
 
     const result = await service.markFailed('attempt-1');
 
@@ -81,8 +113,14 @@ describe('PaymentAttemptService', () => {
   });
 
   it('marks an attempt cancelled from processing', async () => {
-    mockRepository.findById.mockResolvedValue({ id: 'attempt-1', status: PaymentStatus.PROCESSING });
-    mockRepository.updateStatus.mockResolvedValue({ id: 'attempt-1', status: PaymentStatus.CANCELLED });
+    mockRepository.findById.mockResolvedValue({
+      id: 'attempt-1',
+      status: PaymentStatus.PROCESSING,
+    });
+    mockRepository.updateStatus.mockResolvedValue({
+      id: 'attempt-1',
+      status: PaymentStatus.CANCELLED,
+    });
 
     const result = await service.markCancelled('attempt-1');
 
@@ -94,13 +132,15 @@ describe('PaymentAttemptService', () => {
     mockRepository.findById.mockResolvedValue({ id: 'attempt-1', status: PaymentStatus.SUCCESS });
 
     await expect(service.markProcessing('attempt-1')).rejects.toThrow(
-      'Cannot transition payment attempt from SUCCESS to PROCESSING',
+      'Cannot transition payment attempt from SUCCESS to PROCESSING'
     );
     expect(mockRepository.updateStatus).not.toHaveBeenCalled();
   });
 
   it('finds attempts by withdrawal id', async () => {
-    mockRepository.findByWithdrawalId.mockResolvedValue([{ id: 'attempt-1', withdrawalId: 'withdrawal-1' }]);
+    mockRepository.findByWithdrawalId.mockResolvedValue([
+      { id: 'attempt-1', withdrawalId: 'withdrawal-1' },
+    ]);
 
     const result = await service.findAttemptsByWithdrawalId('withdrawal-1');
 
@@ -109,7 +149,10 @@ describe('PaymentAttemptService', () => {
   });
 
   it('finds the latest attempt by withdrawal id', async () => {
-    mockRepository.findLatestAttempt.mockResolvedValue({ id: 'attempt-1', withdrawalId: 'withdrawal-1' });
+    mockRepository.findLatestAttempt.mockResolvedValue({
+      id: 'attempt-1',
+      withdrawalId: 'withdrawal-1',
+    });
 
     const result = await service.findLatestAttempt('withdrawal-1');
 

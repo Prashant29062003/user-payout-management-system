@@ -6,14 +6,12 @@ import { PaymentStatus, WithdrawalStatus } from '../../shared/constants/index.js
 import { BusinessRuleViolationError } from '../../shared/errors/index.js';
 
 export class RecoveryWorkflow {
-  constructor(
-    {
-      paymentAttemptServiceInstance = paymentAttemptService,
-      withdrawalServiceInstance = withdrawalService,
-      ledgerServiceInstance = ledgerService,
-      transactionRunner = withTransaction,
-    } = {}
-  ) {
+  constructor({
+    paymentAttemptServiceInstance = paymentAttemptService,
+    withdrawalServiceInstance = withdrawalService,
+    ledgerServiceInstance = ledgerService,
+    transactionRunner = withTransaction,
+  } = {}) {
     this.paymentAttemptService = paymentAttemptServiceInstance;
     this.withdrawalService = withdrawalServiceInstance;
     this.ledgerService = ledgerServiceInstance;
@@ -31,7 +29,11 @@ export class RecoveryWorkflow {
         throw new BusinessRuleViolationError('Cannot recover a successful payment attempt');
       }
 
-      if (![PaymentStatus.FAILED, PaymentStatus.CANCELLED, PaymentStatus.REJECTED].includes(attempt.status)) {
+      if (
+        ![PaymentStatus.FAILED, PaymentStatus.CANCELLED, PaymentStatus.REJECTED].includes(
+          attempt.status
+        )
+      ) {
         if (failureStatus === PaymentStatus.FAILED) {
           attempt = await this.paymentAttemptService.markFailed(paymentAttemptId, tx);
         } else if (failureStatus === PaymentStatus.CANCELLED) {
@@ -39,7 +41,9 @@ export class RecoveryWorkflow {
         } else if (failureStatus === PaymentStatus.REJECTED) {
           attempt = await this.paymentAttemptService.markRejected(paymentAttemptId, tx);
         } else {
-          throw new BusinessRuleViolationError(`Unsupported failure status for recovery: ${failureStatus}`);
+          throw new BusinessRuleViolationError(
+            `Unsupported failure status for recovery: ${failureStatus}`
+          );
         }
       }
 
@@ -52,7 +56,11 @@ export class RecoveryWorkflow {
         withdrawal = await this.withdrawalService.markFailed(withdrawal.id, tx);
       }
 
-      const alreadyRecovered = await this.ledgerService.hasRecoveryForReference('WITHDRAWAL', withdrawal.id, tx);
+      const alreadyRecovered = await this.ledgerService.hasRecoveryForReference(
+        'WITHDRAWAL',
+        withdrawal.id,
+        tx
+      );
       if (alreadyRecovered) {
         return { alreadyRecovered: true, withdrawal, paymentAttempt: attempt };
       }
@@ -64,7 +72,7 @@ export class RecoveryWorkflow {
           currency: withdrawal.currency,
           referenceId: withdrawal.id,
         },
-        tx,
+        tx
       );
 
       return {
