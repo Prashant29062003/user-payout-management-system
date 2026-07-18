@@ -35,8 +35,10 @@ export class SaleService {
     return this.repository.create({ ...attributes, status });
   }
 
-  async getSaleById(saleId) {
-    const sale = await this.repository.findById(saleId);
+  async getSaleById(saleId, tx = null) {
+    const sale = tx
+      ? await this.repository.findById(saleId, tx)
+      : await this.repository.findById(saleId);
     if (!sale) {
       throw new NotFoundError(`Sale with id ${saleId} not found`);
     }

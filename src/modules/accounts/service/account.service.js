@@ -18,8 +18,10 @@ export class AccountService {
     return account;
   }
 
-  async getAccountByUserId(userId) {
-    const account = await this.repository.findByUserId(userId);
+  async getAccountByUserId(userId, tx = null) {
+    const account = tx
+      ? await this.repository.findByUserId(userId, tx)
+      : await this.repository.findByUserId(userId);
     if (!account) {
       throw new NotFoundError(`Account for user ${userId} not found`);
     }

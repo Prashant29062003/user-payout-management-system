@@ -32,16 +32,20 @@ export class AdvancePayoutService {
     this.repository = repository;
   }
 
-  async createAdvancePayout(attributes) {
+  async createAdvancePayout(attributes, tx = null) {
     const status = attributes.status ?? AdvancePayoutStatus.PENDING;
     validateStatus(status);
 
-    const existingSuccess = await this.repository.findSuccessfulBySaleId(attributes.saleId);
+    const existingSuccess = tx
+      ? await this.repository.findSuccessfulBySaleId(attributes.saleId, tx)
+      : await this.repository.findSuccessfulBySaleId(attributes.saleId);
     if (existingSuccess) {
       throw new BusinessRuleViolationError(`A successful advance payout already exists for sale ${attributes.saleId}`);
     }
 
-    return this.repository.create({ ...attributes, status });
+    return tx
+      ? this.repository.create({ ...attributes, status }, tx)
+      : this.repository.create({ ...attributes, status });
   }
 
   async getAdvancePayoutById(advancePayoutId) {
@@ -52,16 +56,22 @@ export class AdvancePayoutService {
     return payout;
   }
 
-  async findAdvancePayoutsBySaleId(saleId) {
-    return this.repository.findBySaleId(saleId);
+  async findAdvancePayoutsBySaleId(saleId, tx = null) {
+    return tx
+      ? this.repository.findBySaleId(saleId, tx)
+      : this.repository.findBySaleId(saleId);
   }
 
-  async findSuccessfulAdvanceForSale(saleId) {
-    return this.repository.findSuccessfulBySaleId(saleId);
+  async findSuccessfulAdvanceForSale(saleId, tx = null) {
+    return tx
+      ? this.repository.findSuccessfulBySaleId(saleId, tx)
+      : this.repository.findSuccessfulBySaleId(saleId);
   }
 
-  async isEligibleForSale(saleId) {
-    const existingSuccess = await this.repository.findSuccessfulBySaleId(saleId);
+  async isEligibleForSale(saleId, tx = null) {
+    const existingSuccess = tx
+      ? await this.repository.findSuccessfulBySaleId(saleId, tx)
+      : await this.repository.findSuccessfulBySaleId(saleId);
     return !existingSuccess;
   }
 

@@ -10,55 +10,64 @@ export class LedgerService {
     this.transactionRunner = transactionRunner;
   }
 
-  async recordEntry(entry) {
-    return this.transactionRunner(async (tx) => {
+  async recordEntry(entry, tx = null) {
+    if (tx) {
       const repository = new this.repositoryClass(tx);
       const projectionService = this.projection;
 
       const ledgerEntry = await repository.appendEntry(entry);
       await projectionService.applyProjection(entry.accountId, Number(entry.amount), entry.currency, tx);
       return ledgerEntry;
+    }
+
+    return this.transactionRunner(async (transaction) => {
+      const repository = new this.repositoryClass(transaction);
+      const projectionService = this.projection;
+
+      const ledgerEntry = await repository.appendEntry(entry);
+      await projectionService.applyProjection(entry.accountId, Number(entry.amount), entry.currency, transaction);
+      return ledgerEntry;
     });
   }
 
-  async recordAdvance(entry) {
+  async recordAdvance(entry, tx = null) {
     return this.recordEntry({
       ...entry,
       entryType: LedgerEntryType.ADVANCE,
       referenceType: entry.referenceType ?? 'SALE',
-    });
+    }, tx);
   }
 
-  async recordSettlement(entry) {
+  async recordSettlement(entry, tx = null) {
     return this.recordEntry({
       ...entry,
       entryType: LedgerEntryType.SETTLEMENT,
       referenceType: entry.referenceType ?? 'SALE',
-    });
+    }, tx);
   }
 
-  async recordRejectionAdjustment(entry) {
+  async recordRejectionAdjustment(entry, tx = null) {
     return this.recordEntry({
       ...entry,
       entryType: LedgerEntryType.REJECTION_ADJUSTMENT,
       referenceType: entry.referenceType ?? 'SALE',
-    });
+    }, tx);
   }
 
-  async recordWithdrawal(entry) {
+  async recordWithdrawal(entry, tx = null) {
     return this.recordEntry({
       ...entry,
       entryType: LedgerEntryType.WITHDRAWAL,
       referenceType: entry.referenceType ?? 'WITHDRAWAL',
-    });
+    }, tx);
   }
 
-  async recordRecovery(entry) {
+  async recordRecovery(entry, tx = null) {
     return this.recordEntry({
       ...entry,
       entryType: LedgerEntryType.WITHDRAWAL_RECOVERY,
       referenceType: entry.referenceType ?? 'WITHDRAWAL',
-    });
+    }, tx);
   }
 }
 
