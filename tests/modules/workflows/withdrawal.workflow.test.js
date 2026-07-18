@@ -9,6 +9,16 @@ describe('WithdrawalWorkflow', () => {
   const mockPaymentAttemptService = {
     getAttemptByIdempotencyKey: jest.fn(),
     startAttempt: jest.fn(),
+    attachProviderDetails: jest.fn(),
+  };
+
+  const mockPaymentProvider = {
+    name: 'mock',
+    submitPaymentAttempt: jest.fn().mockResolvedValue({
+      provider: 'mock',
+      providerReference: 'mock-attempt-1',
+      status: 'PROCESSING',
+    }),
   };
 
   const mockTransactionRunner = jest.fn(async (work) => {
@@ -28,6 +38,7 @@ describe('WithdrawalWorkflow', () => {
     const workflow = new WithdrawalWorkflow({
       withdrawalServiceInstance: mockWithdrawalService,
       paymentAttemptServiceInstance: mockPaymentAttemptService,
+      paymentProviderInstance: mockPaymentProvider,
       transactionRunner: mockTransactionRunner,
     });
 
@@ -62,7 +73,13 @@ describe('WithdrawalWorkflow', () => {
     );
     expect(result).toEqual({
       withdrawal: { id: 'withdrawal-1', accountId: 'acct-1', amount: 50 },
-      paymentAttempt: { id: 'attempt-1', withdrawalId: 'withdrawal-1', amount: 50 },
+      paymentAttempt: {
+        id: 'attempt-1',
+        withdrawalId: 'withdrawal-1',
+        amount: 50,
+        provider: 'mock',
+        providerReference: 'mock-attempt-1',
+      },
     });
   });
 
@@ -73,6 +90,7 @@ describe('WithdrawalWorkflow', () => {
     const workflow = new WithdrawalWorkflow({
       withdrawalServiceInstance: mockWithdrawalService,
       paymentAttemptServiceInstance: mockPaymentAttemptService,
+      paymentProviderInstance: mockPaymentProvider,
       transactionRunner: mockTransactionRunner,
     });
 
@@ -102,6 +120,7 @@ describe('WithdrawalWorkflow', () => {
     const workflow = new WithdrawalWorkflow({
       withdrawalServiceInstance: mockWithdrawalService,
       paymentAttemptServiceInstance: mockPaymentAttemptService,
+      paymentProviderInstance: mockPaymentProvider,
       transactionRunner: mockTransactionRunner,
     });
 

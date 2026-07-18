@@ -64,6 +64,11 @@ export class PaymentAttemptService {
     return repository.findByIdempotencyKey(idempotencyKey);
   }
 
+  async attachProviderDetails(attemptId, provider, providerReference, tx = null) {
+    const repository = tx ? new this.repository.constructor(tx) : this.repository;
+    return repository.update(attemptId, { provider, providerReference });
+  }
+
   async findAttemptsByWithdrawalId(withdrawalId, tx = null) {
     const repository = tx ? new this.repository.constructor(tx) : this.repository;
     return repository.findByWithdrawalId(withdrawalId);
