@@ -2,9 +2,10 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 
 function createTestPrismaStub() {
-  return {
+  const stub = {
     $connect: async () => undefined,
     $disconnect: async () => undefined,
+    $transaction: async (work) => work(stub),
     account: {
       findUnique: async () => null,
       update: async () => null,
@@ -22,7 +23,29 @@ function createTestPrismaStub() {
       findUnique: async () => null,
       update: async () => null,
     },
+    withdrawal: {
+      findUnique: async () => null,
+      findMany: async () => [],
+      findFirst: async () => null,
+      create: async () => null,
+      update: async () => null,
+      count: async () => 0,
+    },
+    advancePayout: {
+      findUnique: async () => null,
+      findMany: async () => [],
+      findFirst: async () => null,
+      create: async () => null,
+      update: async () => null,
+      count: async () => 0,
+    },
+    paymentAttempt: {
+      findUnique: async () => null,
+      create: async () => null,
+      update: async () => null,
+    },
   };
+  return stub;
 }
 
 function createPrismaClient() {
