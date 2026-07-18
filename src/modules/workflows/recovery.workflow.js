@@ -18,7 +18,7 @@ export class RecoveryWorkflow {
     this.transactionRunner = transactionRunner;
   }
 
-  async execute({ paymentAttemptId, failureStatus = PaymentStatus.FAILED, failureReason = null }) {
+  async execute({ paymentAttemptId, failureStatus = PaymentStatus.FAILED }) {
     return this.transactionRunner(async (tx) => {
       let attempt = await this.paymentAttemptService.getAttemptById(paymentAttemptId, tx);
       if (!attempt.withdrawalId) {

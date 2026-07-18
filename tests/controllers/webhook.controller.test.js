@@ -14,7 +14,6 @@ describe('WebhookController', () => {
   beforeAll(async () => {
     ({ handlePaymentProviderWebhook } =
       await import('../../src/controllers/webhook.controller.js'));
-    utils = await import('../../src/shared/utils/index.js');
   });
 
   afterEach(() => {
