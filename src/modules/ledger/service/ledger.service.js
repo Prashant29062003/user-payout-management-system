@@ -69,6 +69,16 @@ export class LedgerService {
       referenceType: entry.referenceType ?? 'WITHDRAWAL',
     }, tx);
   }
+
+  async findEntriesByReference(referenceType, referenceId, tx = null) {
+    const repository = tx ? new this.repositoryClass(tx) : new this.repositoryClass();
+    return repository.findByReference(referenceType, referenceId);
+  }
+
+  async hasRecoveryForReference(referenceType, referenceId, tx = null) {
+    const entries = await this.findEntriesByReference(referenceType, referenceId, tx);
+    return entries.some((entry) => entry.entryType === LedgerEntryType.WITHDRAWAL_RECOVERY);
+  }
 }
 
 export const ledgerService = new LedgerService();

@@ -50,8 +50,9 @@ export class PaymentAttemptService {
     return repository.create({ ...attributes, status });
   }
 
-  async getAttemptById(attemptId) {
-    const attempt = await this.repository.findById(attemptId);
+  async getAttemptById(attemptId, tx = null) {
+    const repository = tx ? new this.repository.constructor(tx) : this.repository;
+    const attempt = await repository.findById(attemptId);
     if (!attempt) {
       throw new NotFoundError(`Payment attempt with id ${attemptId} not found`);
     }
