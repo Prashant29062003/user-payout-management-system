@@ -48,39 +48,46 @@ export class WithdrawalService {
     this.transactionRunner = transactionRunner;
   }
 
-  async createWithdrawal(attributes) {
+  async createWithdrawal(attributes, tx = null) {
     const status = attributes.status ?? WithdrawalStatus.PENDING;
     validateStatus(status);
     validateAmount(attributes.amount);
 
-    return this.transactionRunner(async (tx) => {
-      const accountRepository = new this.accountRepositoryClass(tx);
-      const withdrawalRepository = new WithdrawalRepository(tx);
 
-      const account = await accountRepository.findById(attributes.accountId);
-      if (!account) {
-        throw new NotFoundError(`Account with id ${attributes.accountId} not found`);
-      }
+    if (tx) {
+      return this.createWithdrawalInTransaction(attributes, tx);
+    }
 
-      if (account.withdrawableBalance < attributes.amount) {
-        throw new BusinessRuleViolationError('Insufficient withdrawable balance for this account');
-      }
-
-      const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
-      const recentWithdrawals = await withdrawalRepository.findRecentByAccountId(attributes.accountId, since);
-      if (recentWithdrawals.length > 0) {
-        throw new BusinessRuleViolationError('A withdrawal was already created for this account in the last 24 hours');
-      }
-
-      return withdrawalRepository.create({
-        ...attributes,
-        status,
-      });
-    });
+    return this.transactionRunner(async (transaction) => this.createWithdrawalInTransaction(attributes, transaction));
   }
 
-  async getWithdrawalById(withdrawalId) {
-    const withdrawal = await this.repository.findById(withdrawalId);
+  async createWithdrawalInTransaction(attributes, tx) {
+    const status = attributes.status ?? WithdrawalStatus.PENDING;
+    const accountRepository = new this.accountRepositoryClass(tx);
+    const withdrawalRepository = new WithdrawalRepository(tx);
+
+    const account = await accountRepository.findById(attributes.accountId);
+    if (!account) {
+      throw new NotFoundError(`Account with id ${attributes.accountId} not found`);
+    }
+
+    if (account.withdrawableBalance < attributes.amount) {
+      throw new BusinessRuleViolationError('Insufficient withdrawable balance for this account');
+    }
+
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const recentWithdrawals = await withdrawalRepository.findRecentByAccountId(attributes.accountId, since);
+    if (recentWithdrawals.length > 0) {
+      throw new BusinessRuleViolationError('A withdrawal was already created for this account in the last 24 hours');
+    }
+
+    return withdrawalRepository.create({
+      ...attributes,
+      status,
+    });
+  }  async getWithdrawalById(withdrawalId, tx = null) {
+    const repository = tx ? new this.repository.constructor(tx) : this.repository;
+    const withdrawal = await repository.findById(withdrawalId);
     if (!withdrawal) {
       throw new NotFoundError(`Withdrawal with id ${withdrawalId} not found`);
     }
@@ -112,20 +119,21 @@ export class WithdrawalService {
     return recentWithdrawals.length === 0;
   }
 
-  async markProcessing(withdrawalId) {
-    return this.changeStatus(withdrawalId, WithdrawalStatus.PROCESSING);
+  async markProcessing(withdrawalId, tx = null) {
+    return this.changeStatus(withdrawalId, WithdrawalStatus.PROCESSING, tx);
   }
 
-  async markSucceeded(withdrawalId) {
-    return this.changeStatus(withdrawalId, WithdrawalStatus.SUCCESS);
+  async markSucceeded(withdrawalId, tx = null) {
+    return this.changeStatus(withdrawalId, WithdrawalStatus.SUCCESS, tx);
   }
 
-  async markFailed(withdrawalId) {
-    return this.changeStatus(withdrawalId, WithdrawalStatus.FAILED);
+  async markFailed(withdrawalId, tx = null) {
+    return this.changeStatus(withdrawalId, WithdrawalStatus.FAILED, tx);
   }
 
-  async recoverFailedWithdrawal(withdrawalId) {
-    const withdrawal = await this.repository.findById(withdrawalId);
+  async recoverFailedWithdrawal(withdrawalId, tx = null) {
+    const repository = tx ? new this.repository.constructor(tx) : this.repository;
+    const withdrawal = await repository.findById(withdrawalId);
     if (!withdrawal) {
       throw new NotFoundError(`Withdrawal with id ${withdrawalId} not found`);
     }
@@ -133,13 +141,14 @@ export class WithdrawalService {
       throw new BusinessRuleViolationError('Only failed withdrawals can be recovered');
     }
 
-    return this.changeStatus(withdrawalId, WithdrawalStatus.PROCESSING);
+    return this.changeStatus(withdrawalId, WithdrawalStatus.PROCESSING, tx);
   }
 
-  async changeStatus(withdrawalId, nextStatus) {
+  async changeStatus(withdrawalId, nextStatus, tx = null) {
     validateStatus(nextStatus);
 
-    const withdrawal = await this.repository.findById(withdrawalId);
+    const repository = tx ? new this.repository.constructor(tx) : this.repository;
+    const withdrawal = await repository.findById(withdrawalId);
     if (!withdrawal) {
       throw new NotFoundError(`Withdrawal with id ${withdrawalId} not found`);
     }
@@ -149,7 +158,7 @@ export class WithdrawalService {
       return withdrawal;
     }
 
-    return this.repository.updateStatus(withdrawalId, nextStatus);
+    return repository.updateStatus(withdrawalId, nextStatus);
   }
 }
 

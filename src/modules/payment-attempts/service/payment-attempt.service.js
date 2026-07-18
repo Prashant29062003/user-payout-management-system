@@ -34,18 +34,20 @@ export class PaymentAttemptService {
     this.repository = repository;
   }
 
-  async startAttempt(attributes) {
+  async startAttempt(attributes, tx = null) {
     const status = attributes.status ?? PaymentStatus.PROCESSING;
     validateStatus(status);
 
+    const repository = tx ? new this.repository.constructor(tx) : this.repository;
+
     if (attributes.idempotencyKey) {
-      const existing = await this.repository.findByIdempotencyKey(attributes.idempotencyKey);
+      const existing = await repository.findByIdempotencyKey(attributes.idempotencyKey);
       if (existing) {
         return existing;
       }
     }
 
-    return this.repository.create({ ...attributes, status });
+    return repository.create({ ...attributes, status });
   }
 
   async getAttemptById(attemptId) {
@@ -56,42 +58,46 @@ export class PaymentAttemptService {
     return attempt;
   }
 
-  async getAttemptByIdempotencyKey(idempotencyKey) {
-    return this.repository.findByIdempotencyKey(idempotencyKey);
+  async getAttemptByIdempotencyKey(idempotencyKey, tx = null) {
+    const repository = tx ? new this.repository.constructor(tx) : this.repository;
+    return repository.findByIdempotencyKey(idempotencyKey);
   }
 
-  async findAttemptsByWithdrawalId(withdrawalId) {
-    return this.repository.findByWithdrawalId(withdrawalId);
+  async findAttemptsByWithdrawalId(withdrawalId, tx = null) {
+    const repository = tx ? new this.repository.constructor(tx) : this.repository;
+    return repository.findByWithdrawalId(withdrawalId);
   }
 
-  async findLatestAttempt(withdrawalId) {
-    return this.repository.findLatestAttempt(withdrawalId);
+  async findLatestAttempt(withdrawalId, tx = null) {
+    const repository = tx ? new this.repository.constructor(tx) : this.repository;
+    return repository.findLatestAttempt(withdrawalId);
   }
 
-  async markProcessing(attemptId) {
-    return this.changeStatus(attemptId, PaymentStatus.PROCESSING);
+  async markProcessing(attemptId, tx = null) {
+    return this.changeStatus(attemptId, PaymentStatus.PROCESSING, tx);
   }
 
-  async markSucceeded(attemptId) {
-    return this.changeStatus(attemptId, PaymentStatus.SUCCESS);
+  async markSucceeded(attemptId, tx = null) {
+    return this.changeStatus(attemptId, PaymentStatus.SUCCESS, tx);
   }
 
-  async markFailed(attemptId) {
-    return this.changeStatus(attemptId, PaymentStatus.FAILED);
+  async markFailed(attemptId, tx = null) {
+    return this.changeStatus(attemptId, PaymentStatus.FAILED, tx);
   }
 
-  async markCancelled(attemptId) {
-    return this.changeStatus(attemptId, PaymentStatus.CANCELLED);
+  async markCancelled(attemptId, tx = null) {
+    return this.changeStatus(attemptId, PaymentStatus.CANCELLED, tx);
   }
 
-  async markRejected(attemptId) {
-    return this.changeStatus(attemptId, PaymentStatus.REJECTED);
+  async markRejected(attemptId, tx = null) {
+    return this.changeStatus(attemptId, PaymentStatus.REJECTED, tx);
   }
 
-  async changeStatus(attemptId, nextStatus) {
+  async changeStatus(attemptId, nextStatus, tx = null) {
     validateStatus(nextStatus);
 
-    const attempt = await this.repository.findById(attemptId);
+    const repository = tx ? new this.repository.constructor(tx) : this.repository;
+    const attempt = await repository.findById(attemptId);
     if (!attempt) {
       throw new NotFoundError(`Payment attempt with id ${attemptId} not found`);
     }
@@ -102,7 +108,7 @@ export class PaymentAttemptService {
       return attempt;
     }
 
-    return this.repository.updateStatus(attemptId, nextStatus);
+    return repository.updateStatus(attemptId, nextStatus);
   }
 }
 
