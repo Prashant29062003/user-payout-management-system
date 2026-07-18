@@ -122,7 +122,7 @@ These errors must be rejected before any financial transaction begins.
 Example:
 
 ```text
-POST /withdrawals
+POST /api/v1/workflows/withdrawals
 
 {
     "amount": "-500"

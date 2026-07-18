@@ -453,7 +453,7 @@ Webhook endpoints must be testable locally.
 Example:
 
 ```http
-POST /webhooks/payment-provider
+POST /api/v1/webhooks/payment-provider
 ```
 
 The webhook request must include the required signature headers.

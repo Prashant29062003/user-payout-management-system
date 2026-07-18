@@ -1216,7 +1216,7 @@ Protects against repeated requests representing the same client operation.
 Example:
 
 ```text
-POST /withdrawals
+POST /api/v1/workflows/withdrawals
 Idempotency-Key: abc123
 ```
 
@@ -1261,7 +1261,7 @@ A withdrawal request should support an idempotency key.
 Example:
 
 ```text
-POST /withdrawals
+POST /api/v1/workflows/withdrawals
 
 Idempotency-Key: client-request-123
 Amount: ₹500
@@ -1279,7 +1279,7 @@ Client does not receive the response because of a network timeout.
 The client retries:
 
 ```text
-POST /withdrawals
+POST /api/v1/workflows/withdrawals
 
 Idempotency-Key: client-request-123
 Amount: ₹500
@@ -1344,7 +1344,7 @@ Recommended response:
 ```text
 Client
    |
-   | POST /withdrawals
+   | POST /api/v1/workflows/withdrawals
    | Idempotency-Key = abc123
    v
 Check Idempotency Record

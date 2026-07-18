@@ -1133,7 +1133,7 @@ Financial Idempotency
 Submit:
 
 ```text
-POST /withdrawals
+POST /api/v1/workflows/withdrawals
 Idempotency-Key: abc123
 ```
 

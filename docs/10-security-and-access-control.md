@@ -273,7 +273,7 @@ Example:
 ```text
 User A
    ↓
-GET /users/B/ledger
+GET /api/v1/accounts/:accountId/ledger
 ```
 
 Even if User A is authenticated, the request must be rejected.
@@ -297,7 +297,7 @@ The server must derive resource ownership from authenticated identity.
 Unsafe:
 
 ```text
-POST /withdrawals
+POST /api/v1/workflows/withdrawals
 
 {
     "userId": "user_B",
@@ -370,7 +370,7 @@ Example attack:
 
 ```text
 User A:
-GET /withdrawals/wd_user_B
+GET /api/v1/accounts/:accountId/ledger
 ```
 
 The API must not return User B's withdrawal.
@@ -1299,7 +1299,7 @@ API versioning should be maintained for controlled evolution.
 Example:
 
 ```text
-/api/v1/withdrawals
+/api/v1/workflows/withdrawals
 ```
 
 Security-sensitive behavior must not silently change between versions.
