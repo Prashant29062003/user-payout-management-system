@@ -1,0 +1,22 @@
+flowchart TD
+    subgraph Rules["Business invariants"]
+        I1[One successful advance payout per sale]
+        I2[Repeated scheduler runs are safe]
+        I3[One recovery per failed withdrawal]
+        I4[Duplicate webhooks do not create duplicate financial effects]
+        I5[Ledger is append-only and auditable]
+    end
+
+    subgraph Workflows["Workflow layer"]
+        A[Advance payout workflow]
+        R[Sale reconciliation workflow]
+        W[Withdrawal workflow]
+        X[Recovery workflow]
+    end
+
+    A --> I1
+    A --> I2
+    R --> I5
+    W --> I3
+    X --> I4
+    X --> I5

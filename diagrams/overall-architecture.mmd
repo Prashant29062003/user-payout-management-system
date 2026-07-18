@@ -1,0 +1,41 @@
+flowchart LR
+    Client[Client / API consumer]
+
+    subgraph API["HTTP API Layer"]
+        Controller[Controllers]
+        Validator[Zod validation]
+        Error[Error middleware]
+    end
+
+    subgraph App["Application Layer"]
+        Workflow[Workflows]
+        Service[Domain services]
+    end
+
+    subgraph Data["Persistence & State"]
+        Repo[Repositories]
+        Ledger[(Immutable ledger)]
+        Projection[(Balance projection)]
+        DB[(PostgreSQL / Neon)]
+    end
+
+    subgraph External["External Systems"]
+        Scheduler[Scheduler / job runner]
+        Provider[Payment provider]
+        Webhook[Webhook endpoint]
+    end
+
+    Client --> Controller
+    Controller --> Validator
+    Controller --> Workflow
+    Workflow --> Service
+    Service --> Repo
+    Repo --> DB
+    DB --> Ledger
+    DB --> Projection
+    Workflow --> Ledger
+    Workflow --> Projection
+    Scheduler --> Workflow
+    Webhook --> Controller
+    Provider --> Webhook
+    Controller --> Error

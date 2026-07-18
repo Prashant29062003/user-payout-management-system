@@ -209,6 +209,14 @@ The system follows a **Modular Monolith** architecture.
                   Payment Provider
 ```
 
+## Mermaid Diagrams
+
+The repository now includes Mermaid source files for the system architecture and core business flows:
+
+- [Overall system architecture](diagrams/overall-architecture.mmd)
+- [Business workflow and lifecycle](diagrams/business-flow.mmd)
+- [Financial invariants and safety rules](diagrams/financial-invariants.mmd)
+
 The major logical modules are:
 
 * **User Module** — manages affiliate users.

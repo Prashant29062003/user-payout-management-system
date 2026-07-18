@@ -1,0 +1,38 @@
+flowchart TD
+    Sale[Affiliate sale created]
+    Pending[Pending sale]
+    Advance[Advance payout eligible]
+    Reconcile[Administrator reconciliation]
+
+    Approved[Approved sale]
+    Rejected[Rejected sale]
+    Settlement[Final settlement / negative adjustment]
+
+    WithdrawalReq[Withdrawal request]
+    Eligibility[Check available balance and rolling window]
+    Create[Create withdrawal + payment attempt]
+    Provider[Submit to payment provider]
+
+    Success[Payment succeeded]
+    Failure[Payment failed / cancelled / rejected]
+    Recovery[Recovery workflow restores funds]
+
+    Sale --> Pending
+    Pending --> Advance
+    Advance --> Reconcile
+    Reconcile --> Approved
+    Reconcile --> Rejected
+    Approved --> Settlement
+    Rejected --> Settlement
+    Settlement --> WithdrawalReq
+
+    WithdrawalReq --> Eligibility
+    Eligibility --> Create
+    Create --> Provider
+    Provider --> Success
+    Provider --> Failure
+    Failure --> Recovery
+    Recovery --> Eligibility
+
+    classDef flow fill:#f9f9f9,stroke:#444,stroke-width:1px;
+    class Sale,Pending,Advance,Reconcile,Approved,Rejected,Settlement,WithdrawalReq,Eligibility,Create,Provider,Success,Failure,Recovery flow;
