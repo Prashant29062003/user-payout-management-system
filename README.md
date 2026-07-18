@@ -219,6 +219,7 @@ The major logical modules are:
 * **PaymentAttempt Module** — manages provider attempt history and idempotent retries.
 * **Ledger Module** — manages immutable financial records and projection updates.
 * **Projection Service** — centralizes withdrawable and recovery balance routing.
+* **Workflows Layer** — composes domain services into business processes such as advance payout.
 
 ---
 
@@ -270,6 +271,7 @@ user-payout-management-system/
 │   │   ├── payment-attempts/
 │   │   ├── sales/
 │   │   ├── users/
+│   │   ├── workflows/
 │   │   └── withdrawals/
 │   ├── shared/
 │   ├── app.js
