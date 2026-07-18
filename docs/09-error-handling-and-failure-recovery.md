@@ -1444,8 +1444,8 @@ Financial endpoints should be rate-limited.
 Examples:
 
 ```text
-POST /withdrawals
-POST /admin/sales/:id/reconcile
+POST /api/v1/workflows/withdrawals
+POST /api/v1/workflows/sales/:saleId/reconcile
 ```
 
 Rate limiting protects against:

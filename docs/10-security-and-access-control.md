@@ -1107,10 +1107,9 @@ Sensitive endpoints must be rate-limited.
 Examples:
 
 ```text
-POST /withdrawals
-POST /auth/login
-POST /webhooks
-POST /admin/sales/:id/reconcile
+POST /api/v1/workflows/withdrawals
+POST /api/v1/workflows/sales/:saleId/reconcile
+POST /api/v1/webhooks/payment-provider
 ```
 
 Rate limits should be applied based on appropriate identifiers:
@@ -1244,8 +1243,8 @@ If authentication uses cookies, state-changing requests require CSRF protection.
 Examples:
 
 ```text
-POST /withdrawals
-POST /admin/sales/:id/reconcile
+POST /api/v1/workflows/withdrawals
+POST /api/v1/workflows/sales/:saleId/reconcile
 ```
 
 Possible mechanisms:

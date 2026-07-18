@@ -39,7 +39,7 @@ Base path:
 Example:
 
 ```text
-GET /api/v1/users/me/account
+GET /api/v1/accounts/:accountId
 ```
 
 All API responses use JSON.
@@ -53,14 +53,20 @@ Example:
 }
 ```
 
-For errors:
+For errors, the API returns the standard response envelope with `success: false` and an `errors` list.
 
 ```json
 {
-  "error": {
-    "code": "INSUFFICIENT_BALANCE",
-    "message": "Insufficient withdrawable balance."
-  }
+  "success": false,
+  "message": "Insufficient withdrawable balance.",
+  "errors": [
+    {
+      "code": "INSUFFICIENT_BALANCE",
+      "message": "Insufficient withdrawable balance."
+    }
+  ],
+  "statusCode": 409,
+  "meta": {}
 }
 ```
 
@@ -88,7 +94,7 @@ Non-breaking changes such as adding optional response fields may be introduced w
 
 # 4. Authentication
 
-All authenticated endpoints require a valid authentication token.
+The API is designed for authenticated requests. In the current implementation, protected endpoints are documented as requiring authentication, even though authentication middleware is not yet included.
 
 Example:
 
@@ -109,7 +115,7 @@ Different actors use different authentication mechanisms.
 
 # 5. Authorization Model
 
-The API uses role-based authorization.
+The API is designed around role-based authorization. In the current implementation, actor boundaries are documented, and authorization is expected to be enforced once middleware is added.
 
 Conceptually:
 
@@ -152,33 +158,51 @@ Payment Provider
 
 ---
 
-# 7. Affiliate User APIs
+# 7. Current Implemented API Endpoints
 
-Affiliate users can:
+The API exposes workflow-oriented operations and financial read models. Controllers are intentionally thin: they validate requests, invoke domain workflows, and return standardized JSON responses.
 
-* View account balance
-* View ledger history
-* View their sales
-* Create withdrawals
-* View withdrawal status
+### Base path
 
-Users cannot:
+```text
+/api/v1
+```
 
-* Modify balances directly
-* Create ledger entries directly
-* Approve sales
-* Reject sales
-* Trigger arbitrary advance payouts
-* Mark payment attempts successful
+### Implemented endpoints
+
+```text
+GET  /api/v1/accounts/:accountId
+GET  /api/v1/accounts/:accountId/ledger
+POST /api/v1/workflows/advance-payouts/run
+POST /api/v1/workflows/sales/:saleId/reconcile
+POST /api/v1/workflows/withdrawals
+POST /api/v1/webhooks/payment-provider
+```
+
+These routes represent business operations, not generic CRUD resources.
 
 ---
 
-# 8. Get Current Account
+# 8. Workflow-Oriented API
+
+The service exposes business workflows rather than direct data mutations. Financial operations are coordinated inside workflow services with explicit transaction boundaries, ledger writes, and projection updates.
+
+Example workflows:
+
+- `POST /api/v1/workflows/advance-payouts/run`
+- `POST /api/v1/workflows/sales/:saleId/reconcile`
+- `POST /api/v1/workflows/withdrawals`
+
+This keeps controllers thin and prevents business rules from being duplicated at the HTTP layer.
+
+---
+
+# 9. Get Current Account Projection
 
 ### Endpoint
 
 ```http
-GET /api/v1/users/me/account
+GET /api/v1/accounts/:accountId
 ```
 
 ### Authentication
@@ -193,31 +217,34 @@ AFFILIATE_USER
 
 ### Purpose
 
-Returns the user's current financial account projection.
+Returns the account projection for an affiliate user, including withdrawable and recovery balances.
 
 ### Response
 
 ```json
 {
+  "success": true,
+  "message": "Account fetched",
   "data": {
-    "accountId": "acc_123",
+    "id": "acc_123",
     "currency": "INR",
     "withdrawableBalance": "68.00",
     "recoveryBalance": "0.00"
-  }
+  },
+  "meta": {}
 }
 ```
 
-The API returns monetary values as strings to avoid precision loss in clients.
+Monetary values are returned as strings to avoid precision loss in clients.
 
 ---
 
-# 9. Get Ledger History
+# 10. Get Account Ledger History
 
 ### Endpoint
 
 ```http
-GET /api/v1/users/me/ledger
+GET /api/v1/accounts/:accountId/ledger
 ```
 
 ### Authentication
@@ -240,16 +267,12 @@ from
 to
 ```
 
-Example:
-
-```http
-GET /api/v1/users/me/ledger?page=1&limit=20
-```
-
 ### Response
 
 ```json
 {
+  "success": true,
+  "message": "Account ledger fetched",
   "data": [
     {
       "id": "ledger_123",
@@ -267,18 +290,16 @@ GET /api/v1/users/me/ledger?page=1&limit=20
 }
 ```
 
-Ledger entries are read-only.
-
-Users cannot modify or delete ledger records.
+Ledger entries are immutable and read-only.
 
 ---
 
-# 10. Get User Sales
+# 11. Advance Payout Workflow
 
 ### Endpoint
 
 ```http
-GET /api/v1/users/me/sales
+POST /api/v1/workflows/advance-payouts/run
 ```
 
 ### Authentication
@@ -288,62 +309,122 @@ Required.
 Role:
 
 ```text
-AFFILIATE_USER
+ADMIN
 ```
 
-### Query Parameters
+### Request
 
-```text
-status
-page
-limit
-```
-
-Example:
-
-```http
-GET /api/v1/users/me/sales?status=PENDING
+```json
+{
+  "saleId": "sale_123"
+}
 ```
 
 ### Response
 
 ```json
 {
-  "data": [
-    {
+  "success": true,
+  "message": "Advance payout processed",
+  "data": {
+    "sale": {
       "id": "sale_123",
-      "totalEarnings": "40.00",
+      "status": "PENDING"
+    },
+    "advancePayout": {
+      "id": "advance_123",
+      "saleId": "sale_123",
+      "amount": "4.00",
       "currency": "INR",
-      "status": "PENDING",
-      "createdAt": "2026-07-18T10:00:00Z"
+      "status": "SUCCESS"
+    },
+    "ledgerEntry": {
+      "id": "ledger_123",
+      "type": "ADVANCE",
+      "amount": "4.00",
+      "currency": "INR",
+      "referenceId": "sale_123"
     }
-  ],
-  "meta": {
-    "page": 1,
-    "limit": 20,
-    "total": 1
-  }
+  },
+  "meta": {}
 }
 ```
 
-Users can only access their own sales.
-
-The API must never allow:
-
-```http
-GET /api/v1/users/other-user-id/sales
-```
-
-unless explicitly authorized for administrative use.
+This workflow creates a successful advance payout and records the corresponding ledger entry atomically.
 
 ---
 
-# 11. Create Withdrawal
+# 12. Sale Reconciliation Workflow
 
 ### Endpoint
 
 ```http
-POST /api/v1/users/me/withdrawals
+POST /api/v1/workflows/sales/:saleId/reconcile
+```
+
+### Authentication
+
+Required.
+
+Role:
+
+```text
+ADMIN
+```
+
+### Request
+
+```json
+{
+  "action": "approve"
+}
+```
+
+or
+
+```json
+{
+  "action": "reject"
+}
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "message": "Sale approved successfully",
+  "data": {
+    "sale": {
+      "id": "sale_123",
+      "status": "APPROVED"
+    },
+    "ledgerEntry": {
+      "id": "ledger_456",
+      "type": "SETTLEMENT",
+      "amount": "36.00",
+      "currency": "INR",
+      "referenceId": "sale_123"
+    },
+    "advanceAmount": "4.00",
+    "settlementAmount": "36.00"
+  },
+  "meta": {}
+}
+```
+
+For rejected sales, the response message becomes `Sale rejected successfully` and `ledgerEntry.type` is `REJECTION_ADJUSTMENT`.
+
+The workflow enforces that only `PENDING` sales can be reconciled.
+
+---
+
+# 13. Create Withdrawal
+
+### Endpoint
+
+```http
+POST /api/v1/workflows/withdrawals
 ```
 
 ### Authentication
@@ -360,623 +441,24 @@ AFFILIATE_USER
 
 ```json
 {
+  "accountId": "acc_123",
+  "userId": "user_123",
   "amount": "500.00",
-  "currency": "INR"
+  "currency": "INR",
+  "idempotencyKey": "9a1f6c1e-8f0d-4d6e-9a00-123456789abc"
 }
 ```
 
-### Required Headers
+### Request Notes
 
-```http
-Authorization: Bearer <access_token>
-Idempotency-Key: <unique-request-key>
-```
-
----
-
-# 12. Withdrawal Validation
-
-The server validates:
-
-1. User is authenticated.
-2. User owns the account.
-3. Currency matches account currency.
-4. Amount is positive.
-5. Amount does not exceed withdrawable balance.
-6. User has not violated the 24-hour withdrawal restriction.
-7. Request is not already processed using the same idempotency key.
-
-The client cannot bypass any of these checks.
+- `accountId` and `userId` identify the withdrawal owner.
+- `idempotencyKey` is provided in the body to support safe retries.
+- The endpoint creates a withdrawal and a payment attempt in a single transaction.
+- Final payment settlement is confirmed later by the payment provider webhook.
 
 ---
 
-# 13. Withdrawal Creation Flow
-
-The withdrawal API performs:
-
-```text
-Request
-   |
-   v
-Authenticate User
-   |
-   v
-Validate Request
-   |
-   v
-Lock Account
-   |
-   v
-Validate Balance
-   |
-   v
-Validate 24-Hour Rule
-   |
-   v
-Create Withdrawal
-   |
-   v
-Create Withdrawal Ledger Entry
-   |
-   v
-Decrease Withdrawable Balance
-   |
-   v
-Commit Transaction
-   |
-   v
-Create / Trigger Payment Attempt
-   |
-   v
-Return Response
-```
-
-The account lock and financial ledger operation must occur in one database transaction.
-
----
-
-# 14. Withdrawal Response
-
-Successful creation:
-
-```http
-HTTP 201 Created
-```
-
-Example:
-
-```json
-{
-  "data": {
-    "withdrawalId": "withdrawal_123",
-    "amount": "500.00",
-    "currency": "INR",
-    "status": "PROCESSING"
-  }
-}
-```
-
-The API must not claim success before the external payment provider confirms successful transfer.
-
----
-
-# 15. Withdrawal Idempotency
-
-The `Idempotency-Key` header is mandatory for withdrawal creation.
-
-Example:
-
-```http
-Idempotency-Key: 9a1f6c1e-8f0d-4d6e-9a00-123456789abc
-```
-
-If the same key is submitted again:
-
-```text
-Same User
-Same Idempotency Key
-Same Request
-```
-
-the API must return the original operation result instead of creating another withdrawal.
-
-Example:
-
-```text
-Request A
-    |
-    +---- Withdrawal W1
-
-
-Request B
-    |
-    +---- Same Idempotency-Key
-    |
-    +---- Return W1
-```
-
-No second ledger entry is created.
-
-No second withdrawal is created.
-
----
-
-# 16. Idempotency-Key Rules
-
-An idempotency key must be unique within the scope of the authenticated user and operation.
-
-Conceptually:
-
-```text
-(user_id, operation_type, idempotency_key)
-```
-
-must be unique.
-
-The system should also store a request fingerprint.
-
-Example:
-
-```text
-User
-Operation
-Idempotency Key
-Request Body Hash
-Response
-```
-
-If a client reuses the same key with a different amount:
-
-```json
-{
-  "amount": "1000.00"
-}
-```
-
-the API should return:
-
-```http
-409 Conflict
-```
-
-with:
-
-```json
-{
-  "error": {
-    "code": "IDEMPOTENCY_KEY_REUSED",
-    "message": "The idempotency key was already used with a different request."
-  }
-}
-```
-
----
-
-# 17. Get Withdrawal
-
-### Endpoint
-
-```http
-GET /api/v1/users/me/withdrawals/{withdrawalId}
-```
-
-### Authentication
-
-Required.
-
-### Authorization
-
-The user must own the withdrawal.
-
-### Response
-
-```json
-{
-  "data": {
-    "id": "withdrawal_123",
-    "amount": "500.00",
-    "currency": "INR",
-    "status": "PROCESSING",
-    "createdAt": "2026-07-18T10:00:00Z"
-  }
-}
-```
-
----
-
-# 18. Get Withdrawal History
-
-### Endpoint
-
-```http
-GET /api/v1/users/me/withdrawals
-```
-
-### Query Parameters
-
-```text
-status
-page
-limit
-from
-to
-```
-
-### Response
-
-```json
-{
-  "data": [
-    {
-      "id": "withdrawal_123",
-      "amount": "500.00",
-      "currency": "INR",
-      "status": "SUCCESS",
-      "createdAt": "2026-07-18T10:00:00Z"
-    }
-  ],
-  "meta": {
-    "page": 1,
-    "limit": 20,
-    "total": 1
-  }
-}
-```
-
----
-
-# 19. Administrator APIs
-
-Administrators can:
-
-* View pending sales
-* View sale details
-* Approve sales
-* Reject sales
-* Reconcile sales
-
-Administrators cannot:
-
-* Directly modify account balances
-* Directly create ledger entries
-* Manually mark withdrawals successful
-* Bypass ledger transactions
-
----
-
-# 20. List Pending Sales
-
-### Endpoint
-
-```http
-GET /api/v1/admin/sales?status=PENDING
-```
-
-### Authentication
-
-Required.
-
-Role:
-
-```text
-ADMIN
-```
-
-### Response
-
-```json
-{
-  "data": [
-    {
-      "id": "sale_123",
-      "userId": "user_123",
-      "totalEarnings": "40.00",
-      "currency": "INR",
-      "status": "PENDING",
-      "createdAt": "2026-07-18T10:00:00Z"
-    }
-  ]
-}
-```
-
----
-
-# 21. Get Sale Details
-
-### Endpoint
-
-```http
-GET /api/v1/admin/sales/{saleId}
-```
-
-### Authentication
-
-Required.
-
-Role:
-
-```text
-ADMIN
-```
-
-The response may include:
-
-* Sale information
-* User information
-* Advance payout information
-* Payment attempt information
-* Current reconciliation state
-
----
-
-# 22. Reconcile Sale
-
-### Endpoint
-
-```http
-POST /api/v1/admin/sales/{saleId}/reconcile
-```
-
-### Authentication
-
-Required.
-
-Role:
-
-```text
-ADMIN
-```
-
-### Request
-
-```json
-{
-  "status": "APPROVED"
-}
-```
-
-or:
-
-```json
-{
-  "status": "REJECTED"
-}
-```
-
----
-
-# 23. Reconciliation Rules
-
-The API accepts only:
-
-```text
-APPROVED
-REJECTED
-```
-
-The current sale must be:
-
-```text
-PENDING
-```
-
-If the sale is already:
-
-```text
-APPROVED
-```
-
-or:
-
-```text
-REJECTED
-```
-
-the API must reject the request.
-
-Example:
-
-```http
-409 Conflict
-```
-
-Response:
-
-```json
-{
-  "error": {
-    "code": "SALE_ALREADY_RECONCILED",
-    "message": "This sale has already been reconciled."
-  }
-}
-```
-
----
-
-# 24. Reconciliation Concurrency
-
-Two administrators may attempt to reconcile the same sale concurrently.
-
-Example:
-
-```text
-Admin A
-   |
-   +---- APPROVE
-
-
-Admin B
-   |
-   +---- REJECT
-```
-
-The system must guarantee that only one operation succeeds.
-
-The implementation uses:
-
-```text
-SELECT ... FOR UPDATE
-```
-
-The first transaction locks the sale.
-
-The second transaction waits.
-
-After the first transaction commits:
-
-```text
-Sale Status != PENDING
-```
-
-The second transaction fails safely.
-
----
-
-# 25. Approved Sale Response
-
-Example:
-
-```json
-{
-  "data": {
-    "saleId": "sale_123",
-    "status": "APPROVED",
-    "totalEarnings": "40.00",
-    "advancePaid": "4.00",
-    "finalAdjustment": "36.00"
-  }
-}
-```
-
-The financial operation must be completed atomically before returning success.
-
----
-
-# 26. Rejected Sale Response
-
-Example:
-
-```json
-{
-  "data": {
-    "saleId": "sale_123",
-    "status": "REJECTED",
-    "totalEarnings": "40.00",
-    "advancePaid": "4.00",
-    "recoveryAmount": "4.00"
-  }
-}
-```
-
-The API does not expose internal implementation details about how the recovery is applied.
-
----
-
-# 27. Scheduler APIs
-
-The scheduler is an internal system component.
-
-It must not use public user authentication.
-
-A dedicated internal authentication mechanism should be used.
-
-Possible options include:
-
-```text
-Internal API Key
-Service-to-Service JWT
-mTLS
-Private Network Authentication
-```
-
-For the assignment, a service-to-service API key is sufficient.
-
----
-
-# 28. Process Advance Payouts
-
-### Endpoint
-
-```http
-POST /api/v1/internal/advance-payouts/process
-```
-
-### Authentication
-
-Required.
-
-Role:
-
-```text
-INTERNAL_SERVICE
-```
-
-### Purpose
-
-Processes eligible pending sales.
-
-The scheduler should not directly calculate arbitrary balances.
-
-The application service determines eligibility.
-
----
-
-# 29. Scheduler Processing Flow
-
-```text
-Scheduler
-   |
-   v
-Find Eligible Pending Sales
-   |
-   v
-For Each Sale
-   |
-   v
-Check Successful Advance Exists
-   |
-   +---- YES ---> Skip
-   |
-   +---- NO ----> Create Advance
-                      |
-                      v
-                 Create Ledger Entry
-                      |
-                      v
-                 Update Balance
-                      |
-                      v
-                 Create Payment Attempt
-```
-
-The advance operation must be idempotent.
-
-The database constraint remains the final protection against duplicate advances.
-
----
-
-# 30. Scheduler Response
-
-Example:
-
-```json
-{
-  "data": {
-    "processed": 100,
-    "successful": 95,
-    "skipped": 4,
-    "failed": 1
-  }
-}
-```
-
-The scheduler should process failures independently.
-
-One failed sale must not cause the entire batch to fail.
-
----
-
-# 31. Payment Provider Webhook
+# 14. Payment Provider Webhook
 
 ### Endpoint
 
@@ -986,185 +468,96 @@ POST /api/v1/webhooks/payment-provider
 
 ### Authentication
 
-Provider-specific signature verification is required.
+Provider-specific signature or API authentication is required.
 
-The API must verify:
-
-* Signature
-* Timestamp
-* Provider event ID
-* Event authenticity
-
----
-
-# 32. Webhook Request
-
-Example:
+### Request
 
 ```json
 {
-  "eventId": "evt_123",
-  "paymentReference": "pay_123",
+  "paymentAttemptId": "payment_attempt_123",
+  "status": "SUCCESS",
+  "failureReason": null
+}
+```
+
+or
+
+```json
+{
+  "paymentAttemptId": "payment_attempt_123",
   "status": "FAILED",
-  "reason": "INSUFFICIENT_FUNDS",
-  "occurredAt": "2026-07-18T10:00:00Z"
+  "failureReason": "INSUFFICIENT_FUNDS"
 }
 ```
 
-The actual provider payload may differ.
-
-The application should normalize provider-specific payloads into an internal event model.
-
----
-
-# 33. Webhook Idempotency
-
-Payment providers may send the same webhook multiple times.
-
-Example:
-
-```text
-Webhook A
-    |
-    +---- FAILED
-
-
-Webhook B
-    |
-    +---- FAILED
-
-
-Webhook C
-    |
-    +---- FAILED
-```
-
-The system must process the financial effect exactly once.
-
-The provider event ID should be persisted.
-
-Conceptually:
-
-```text
-provider
-event_id
-processed_at
-```
-
-must be unique.
-
----
-
-# 34. Failed Withdrawal Recovery
-
-When a withdrawal receives:
-
-```text
-FAILED
-CANCELLED
-REJECTED
-```
-
-the system must:
-
-```text
-1. Lock withdrawal
-2. Verify current state
-3. Update payment attempt
-4. Mark withdrawal failed
-5. Check recovery already processed
-6. Create WITHDRAWAL_RECOVERY ledger entry
-7. Restore available funds
-8. Update account projection
-9. Commit
-```
-
-The recovery operation must be idempotent.
-
----
-
-# 35. Webhook Success
-
-If the provider reports:
-
-```text
-SUCCESS
-```
-
-the system must:
-
-```text
-1. Lock payment attempt
-2. Verify current state
-3. Mark payment attempt SUCCESS
-4. Mark withdrawal SUCCESS
-5. Do not create another withdrawal ledger entry
-6. Commit
-```
-
-The original withdrawal ledger entry already represents the debit.
-
-The provider's success notification does not create another financial debit.
-
----
-
-# 36. Invalid State Transitions
-
-The API must reject invalid state transitions.
-
-Examples:
-
-```text
-APPROVED → REJECTED
-REJECTED → APPROVED
-SUCCESS → FAILED
-FAILED → SUCCESS
-```
-
-unless explicitly supported by the state machine.
-
-Invalid transitions should return:
-
-```http
-409 Conflict
-```
-
-Example:
+### Response
 
 ```json
 {
-  "error": {
-    "code": "INVALID_STATE_TRANSITION",
-    "message": "The requested state transition is not allowed."
-  }
+  "success": true,
+  "message": "Payment succeeded",
+  "data": {
+    "paymentAttempt": {
+      "id": "payment_attempt_123",
+      "status": "SUCCESS"
+    },
+    "withdrawal": {
+      "id": "withdrawal_123",
+      "status": "SUCCESS"
+    },
+    "ledgerEntry": {
+      "id": "ledger_789",
+      "type": "WITHDRAWAL",
+      "amount": "500.00"
+    }
+  },
+  "meta": {}
 }
 ```
 
+Successful payment updates withdrawal state and idempotently records the withdrawal ledger entry when needed.
+
+For failed payment attempts, the response is:
+
+```json
+{
+  "success": true,
+  "message": "Recovery processed",
+  "data": {
+    "paymentAttempt": { ... },
+    "withdrawal": { ... },
+    "recoveryLedgerEntry": { ... }
+  },
+  "meta": {}
+}
+```
+
+Failed events invoke the Recovery Workflow to restore the withdrawn amount safely and only once.
+
+### Idempotency
+
+Webhook payloads may arrive more than once. The system ensures success and recovery effects are applied exactly once.
+
 ---
 
-# 37. Standard HTTP Status Codes
+# 15. Current API Coverage
 
-The API uses:
+The current implementation does not include direct user profile routes or generic admin CRUD endpoints. The API surface is intentionally limited to the workflows and account read models required for the financial engine.
 
-| Status | Meaning                              |
-| ------ | ------------------------------------ |
-| `200`  | Successful read/update               |
-| `201`  | Resource created                     |
-| `202`  | Accepted for asynchronous processing |
-| `400`  | Invalid request                      |
-| `401`  | Unauthenticated                      |
-| `403`  | Unauthorized                         |
-| `404`  | Resource not found                   |
-| `409`  | Business rule or state conflict      |
-| `422`  | Validation failure                   |
-| `429`  | Rate limit exceeded                  |
-| `500`  | Internal server error                |
-| `502`  | External provider failure            |
-| `503`  | Service unavailable                  |
+# 16. Future Planned Endpoints
+
+These may be added later but are not implemented yet:
+
+- [ ] Authenticated user profile endpoints
+- [ ] Admin sales listing and detail endpoints
+- [ ] Scheduler management and reporting
+- [ ] Authentication middleware
+- [ ] OpenAPI / Swagger documentation
+- [ ] Metrics and observability
 
 ---
 
-# 38. Error Response Contract
+# 17. Error Response Contract
 
 All errors should follow a consistent format.
 
@@ -1172,13 +565,20 @@ Example:
 
 ```json
 {
-  "error": {
-    "code": "INSUFFICIENT_BALANCE",
-    "message": "The requested withdrawal exceeds the available balance.",
-    "details": {
-      "requested": "500.00",
-      "available": "100.00"
-    },
+  "success": false,
+  "message": "The requested withdrawal exceeds the available balance.",
+  "errors": [
+    {
+      "code": "INSUFFICIENT_BALANCE",
+      "message": "The requested withdrawal exceeds the available balance.",
+      "details": {
+        "requested": "500.00",
+        "available": "100.00"
+      }
+    }
+  ],
+  "statusCode": 409,
+  "meta": {
     "requestId": "req_123"
   }
 }
@@ -1188,7 +588,7 @@ The `requestId` allows support and engineering teams to trace failures through l
 
 ---
 
-# 39. Business Error Codes
+# 18. Business Error Codes
 
 Recommended error codes include:
 
@@ -1220,7 +620,7 @@ RECOVERY_ALREADY_PROCESSED
 
 ---
 
-# 40. Pagination
+# 19. Pagination
 
 List endpoints should support pagination.
 
@@ -1249,20 +649,20 @@ Clients should not be allowed to request unlimited data.
 
 ---
 
-# 41. Rate Limiting
+# 20. Rate Limiting
 
 Public endpoints should be rate limited.
 
 Especially:
 
 ```text
-POST /users/me/withdrawals
+POST /api/v1/workflows/withdrawals
 ```
 
 and:
 
 ```text
-POST /admin/sales/{id}/reconcile
+POST /api/v1/workflows/sales/:saleId/reconcile
 ```
 
 Rate limiting protects against:
@@ -1278,7 +678,7 @@ Both mechanisms are required.
 
 ---
 
-# 42. API Security Rules
+# 21. API Security Rules
 
 The API must enforce:
 
@@ -1306,7 +706,7 @@ The balance must always be calculated by trusted server-side logic.
 
 ---
 
-# 43. Financial Data Exposure
+# 24. Financial Data Exposure
 
 The API should expose:
 
@@ -1329,7 +729,7 @@ internal service tokens
 
 ---
 
-# 44. API Request Lifecycle
+# 25. API Request Lifecycle
 
 A typical authenticated request follows:
 
@@ -1368,7 +768,7 @@ External provider calls should occur outside database transactions unless the pr
 
 ---
 
-# 45. Withdrawal Architecture
+# 26. Withdrawal Architecture
 
 The recommended withdrawal flow is:
 
@@ -1413,7 +813,7 @@ This separates internal financial commitment from unreliable external execution.
 
 ---
 
-# 46. Advance Payout Architecture
+# 27. Advance Payout Architecture
 
 ```text
 Scheduler
@@ -1454,7 +854,7 @@ The unique database constraint guarantees that duplicate scheduler executions ca
 
 ---
 
-# 47. Reconciliation Architecture
+# 28. Reconciliation Architecture
 
 ```text
 Admin
@@ -1498,7 +898,7 @@ COMMIT
 
 ---
 
-# 48. API Idempotency Matrix
+# 29. API Idempotency Matrix
 
 | Operation           | Idempotency Mechanism                |
 | ------------------- | ------------------------------------ |
@@ -1513,7 +913,7 @@ This ensures every retryable operation has a defined duplicate-protection mechan
 
 ---
 
-# 49. API Responsibility Boundaries
+# 22. API Responsibility Boundaries
 
 The API layer is responsible for:
 
@@ -1558,39 +958,28 @@ This prevents business logic from leaking into HTTP controllers.
 
 ---
 
-# 50. Recommended API Endpoint Summary
+# 23. Recommended API Endpoint Summary
 
 ```text
 AFFILIATE USER
 
-GET    /api/v1/users/me/account
-GET    /api/v1/users/me/ledger
-GET    /api/v1/users/me/sales
-GET    /api/v1/users/me/withdrawals
-GET    /api/v1/users/me/withdrawals/{id}
-POST   /api/v1/users/me/withdrawals
-
+GET  /api/v1/accounts/:accountId
+GET  /api/v1/accounts/:accountId/ledger
+POST /api/v1/workflows/withdrawals
 
 ADMIN
 
-GET    /api/v1/admin/sales
-GET    /api/v1/admin/sales/{id}
-POST   /api/v1/admin/sales/{id}/reconcile
-
-
-INTERNAL SCHEDULER
-
-POST   /api/v1/internal/advance-payouts/process
-
+POST /api/v1/workflows/advance-payouts/run
+POST /api/v1/workflows/sales/:saleId/reconcile
 
 PAYMENT PROVIDER
 
-POST   /api/v1/webhooks/payment-provider
+POST /api/v1/webhooks/payment-provider
 ```
 
 ---
 
-# 51. Final API Design Principles
+# 30. Final API Design Principles
 
 The API follows these rules:
 
@@ -1614,26 +1003,27 @@ The API follows these rules:
 The final API architecture is therefore:
 
 ```text
-                    HTTP API
-                       |
-          +------------+------------+
-          |            |            |
-          v            v            v
-       Affiliate      Admin      Internal
-          |            |          Scheduler
-          |            |            |
-          +------------+------------+
-                       |
-                       v
-              Application Services
-                       |
-          +------------+------------+
-          |                         |
-          v                         v
-      PostgreSQL              Payment Provider
-          |                         |
-          v                         v
-       Ledger                   Webhooks
+                     HTTP API
+                        |
+                        v
+                    Controllers
+                        |
+                        v
+                     Workflows
+                        |
+                        v
+               Application / Domain Services
+                        |
+                        v
+                   Repositories / ORM
+                        |
+          +-------------+-------------+
+          |                           |
+          v                           v
+      PostgreSQL                Payment Provider
+          |                           |
+          v                           v
+        Ledger                    Webhooks
           |
           v
     Account Projection
@@ -1642,3 +1032,4 @@ The final API architecture is therefore:
 The API acts as the **boundary of the system**, while the application service layer owns the business operations and the database enforces the financial invariants.
 
 This separation allows the system to evolve internally without breaking the external API contract.
+
