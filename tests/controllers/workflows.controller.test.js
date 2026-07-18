@@ -70,12 +70,10 @@ describe('WorkflowsController', () => {
   });
 
   it('creates a withdrawal', async () => {
-    jest
-      .spyOn(withdrawalWorkflow, 'execute')
-      .mockResolvedValue({
-        withdrawal: { id: 'withdrawal-1' },
-        paymentAttempt: { id: 'attempt-1' },
-      });
+    jest.spyOn(withdrawalWorkflow, 'execute').mockResolvedValue({
+      withdrawal: { id: 'withdrawal-1' },
+      paymentAttempt: { id: 'attempt-1' },
+    });
 
     const req = {
       body: {

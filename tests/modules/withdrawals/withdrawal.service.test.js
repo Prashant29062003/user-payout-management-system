@@ -11,14 +11,12 @@ describe('WithdrawalService', () => {
   const mockTransactionRunner = jest.fn(async (work) => {
     const tx = {
       withdrawal: {
-        create: jest
-          .fn()
-          .mockResolvedValue({
-            id: 'withdrawal-1',
-            accountId: 'acct-1',
-            amount: 100,
-            status: 'PENDING',
-          }),
+        create: jest.fn().mockResolvedValue({
+          id: 'withdrawal-1',
+          accountId: 'acct-1',
+          amount: 100,
+          status: 'PENDING',
+        }),
         findMany: jest.fn().mockResolvedValue([]),
       },
       account: {
