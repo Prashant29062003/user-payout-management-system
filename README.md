@@ -264,6 +264,9 @@ user-payout-management-system/
 │
 ├── src/
 │   ├── config/
+│   ├── controllers/
+│   ├── middleware/
+│   ├── routes/
 │   ├── modules/
 │   │   ├── accounts/
 │   │   ├── advance-payouts/
