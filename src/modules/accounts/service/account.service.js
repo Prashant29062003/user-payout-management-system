@@ -10,8 +10,9 @@ export class AccountService {
     return this.repository.create(attributes);
   }
 
-  async getAccountById(accountId) {
-    const account = await this.repository.findById(accountId);
+  async getAccountById(accountId, tx = null) {
+    const repository = tx ? new this.repository.constructor(tx) : this.repository;
+    const account = await repository.findById(accountId);
     if (!account) {
       throw new NotFoundError(`Account with id ${accountId} not found`);
     }
@@ -19,9 +20,8 @@ export class AccountService {
   }
 
   async getAccountByUserId(userId, tx = null) {
-    const account = tx
-      ? await this.repository.findByUserId(userId, tx)
-      : await this.repository.findByUserId(userId);
+    const repository = tx ? new this.repository.constructor(tx) : this.repository;
+    const account = await repository.findByUserId(userId);
     if (!account) {
       throw new NotFoundError(`Account for user ${userId} not found`);
     }

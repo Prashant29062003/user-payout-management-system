@@ -36,9 +36,8 @@ export class SaleService {
   }
 
   async getSaleById(saleId, tx = null) {
-    const sale = tx
-      ? await this.repository.findById(saleId, tx)
-      : await this.repository.findById(saleId);
+    const repository = tx ? new this.repository.constructor(tx) : this.repository;
+    const sale = await repository.findById(saleId);
     if (!sale) {
       throw new NotFoundError(`Sale with id ${saleId} not found`);
     }
@@ -53,18 +52,20 @@ export class SaleService {
     return this.repository.findByUserId(userId);
   }
 
-  async markApproved(saleId) {
-    return this.changeStatus(saleId, SaleStatus.APPROVED);
+  async markApproved(saleId, tx = null) {
+    return this.changeStatus(saleId, SaleStatus.APPROVED, tx);
   }
 
-  async markRejected(saleId) {
-    return this.changeStatus(saleId, SaleStatus.REJECTED);
+  async markRejected(saleId, tx = null) {
+    return this.changeStatus(saleId, SaleStatus.REJECTED, tx);
   }
 
-  async changeStatus(saleId, nextStatus) {
+  async changeStatus(saleId, nextStatus, tx = null) {
     validateStatus(nextStatus);
 
-    const sale = await this.repository.findById(saleId);
+    const repository = tx ? new this.repository.constructor(tx) : this.repository;
+
+    const sale = await repository.findById(saleId);
     if (!sale) {
       throw new NotFoundError(`Sale with id ${saleId} not found`);
     }
@@ -75,7 +76,7 @@ export class SaleService {
       return sale;
     }
 
-    return this.repository.updateStatus(saleId, nextStatus);
+    return repository.updateStatus(saleId, nextStatus);
   }
 }
 
