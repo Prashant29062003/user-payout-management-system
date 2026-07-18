@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id          String        @id @default(uuid())
+  email       String        @unique
+  name        String
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  account     Account?
+  sales       Sale[]
+  withdrawals Withdrawal[]
+
+  @@map("users")
+}
+
+model Account {
+  id                  String        @id @default(uuid())
+  userId              String        @unique @map("user_id")
+  currency            String        @db.Char(3)
+  withdrawableBalance Decimal       @default(0) @map("withdrawable_balance") @db.Decimal(19, 4)
+  recoveryBalance     Decimal       @default(0) @map("recovery_balance") @db.Decimal(19, 4)
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
+  user                User          @relation(fields: [userId], references: [id])
+  ledgerEntries       LedgerEntry[]
+  withdrawals         Withdrawal[]
+
+  @@map("accounts")
+}
+
+model Sale {
+  id            String         @id @default(uuid())
+  userId        String         @map("user_id")
+  totalEarnings Decimal        @map("total_earnings") @db.Decimal(19, 4)
+  currency      String         @db.Char(3)
+  status        String         @db.VarChar(16)
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  reconciledAt  DateTime?      @map("reconciled_at")
+  user          User           @relation(fields: [userId], references: [id])
+  advancePayouts AdvancePayout[]
+
+  @@map("sales")
+}
+
+model AdvancePayout {
+  id              String            @id @default(uuid())
+  saleId          String            @map("sale_id")
+  amount          Decimal           @db.Decimal(19, 4)
+  currency        String            @db.Char(3)
+  status          String            @db.VarChar(16)
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+  completedAt     DateTime?         @map("completed_at")
+  sale            Sale              @relation(fields: [saleId], references: [id])
+  paymentAttempts PaymentAttempt[]
+
+  @@map("advance_payouts")
+}
+
+model Withdrawal {
+  id              String            @id @default(uuid())
+  userId          String            @map("user_id")
+  accountId       String            @map("account_id")
+  amount          Decimal           @db.Decimal(19, 4)
+  currency        String            @db.Char(3)
+  status          String            @db.VarChar(16)
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+  completedAt     DateTime?         @map("completed_at")
+  user            User              @relation(fields: [userId], references: [id])
+  account         Account           @relation(fields: [accountId], references: [id])
+  paymentAttempts PaymentAttempt[]
+
+  @@map("withdrawals")
+}
+
+model PaymentAttempt {
+  id                String         @id @default(uuid())
+  advancePayoutId   String?        @map("advance_payout_id")
+  withdrawalId      String?        @map("withdrawal_id")
+  provider          String
+  providerReference String?        @map("provider_reference")
+  idempotencyKey    String         @unique @map("idempotency_key")
+  status            String         @db.VarChar(16)
+  failureReason     String?        @map("failure_reason")
+  createdAt         DateTime       @default(now()) @map("created_at")
+  updatedAt         DateTime       @updatedAt @map("updated_at")
+  completedAt       DateTime?      @map("completed_at")
+  advancePayout     AdvancePayout? @relation(fields: [advancePayoutId], references: [id])
+  withdrawal        Withdrawal?    @relation(fields: [withdrawalId], references: [id])
+
+  @@map("payment_attempts")
+}
+
+model LedgerEntry {
+  id            String   @id @default(uuid())
+  accountId     String   @map("account_id")
+  entryType     String   @map("entry_type")
+  amount        Decimal  @db.Decimal(19, 4)
+  currency      String   @db.Char(3)
+  referenceType String   @map("reference_type")
+  referenceId   String   @map("reference_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+  account       Account  @relation(fields: [accountId], references: [id])
+
+  @@map("ledger_entries")
+}

@@ -1,11 +1,33 @@
+# Node dependencies
 node_modules/
+
+# Environment variables
 .env
 .env.local
+.env.*.local
+.env.test
+
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# npm / lock files
 .pnp.*
-.coverage
-coverage/
+
+# Build output
 dist/
+coverage/
+.coverage
+
+# Operating system files
 .DS_Store
+
+# Prisma generated artifacts and temporary files
+.prisma/
+prisma/.env
+prisma/dev.db
+
+# IDE/editor folders
+.vscode/
+.idea/

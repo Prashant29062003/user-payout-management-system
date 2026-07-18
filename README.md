@@ -340,7 +340,9 @@ PAYMENT_PROVIDER_API_KEY=
 
 ### Database Setup
 
-Run database migrations:
+Configure your environment with a PostgreSQL-compatible `DATABASE_URL`, for example using Neon.
+
+Then run the Prisma migrations:
 
 ```bash
 npm run db:migrate
