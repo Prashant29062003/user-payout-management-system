@@ -1,35 +1,64 @@
+import { z } from 'zod';
 import { ValidationError } from './errors/index.js';
+import { PaymentStatus } from './constants/index.js';
 
-export function requireString(value, name) {
-  if (typeof value !== 'string' || !value.trim()) {
-    throw new ValidationError(`${name} must be a non-empty string`);
-  }
-  return value.trim();
+const nonEmptyString = z.string().trim().min(1);
+
+function formatZodErrors(error) {
+  return error.errors.map((issue) => ({
+    path: issue.path.map((segment) => String(segment)).join('.') || '(root)',
+    message: issue.message,
+  }));
 }
 
-export function requireOptionalString(value, name) {
-  if (value === undefined || value === null) {
-    return null;
-  }
+export function parseSchema(schema, data) {
+  try {
+    return schema.parse(data);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new ValidationError('Invalid request data', formatZodErrors(error));
+    }
 
-  if (typeof value !== 'string' || !value.trim()) {
-    throw new ValidationError(`${name} must be a non-empty string when provided`);
+    throw error;
   }
-
-  return value.trim();
 }
 
-export function requirePositiveNumber(value, name) {
-  const number = Number(value);
-  if (Number.isNaN(number) || number <= 0) {
-    throw new ValidationError(`${name} must be a positive number`);
-  }
-  return number;
-}
+export const accountIdParamsSchema = z.object({
+  accountId: nonEmptyString,
+});
 
-export function requireEnumValue(value, validValues, name) {
-  if (!validValues.includes(value)) {
-    throw new ValidationError(`${name} must be one of: ${validValues.join(', ')}`);
-  }
-  return value;
-}
+export const saleIdParamsSchema = z.object({
+  saleId: nonEmptyString,
+});
+
+export const advancePayoutBodySchema = z.object({
+  saleId: nonEmptyString,
+});
+
+export const reconcileSaleBodySchema = z.object({
+  action: z.enum(['approve', 'reject']),
+});
+
+export const createWithdrawalBodySchema = z.object({
+  accountId: nonEmptyString,
+  userId: nonEmptyString,
+  amount: z.preprocess((value) => {
+    if (typeof value === 'string' && value.trim() !== '') {
+      return Number(value);
+    }
+    return value;
+  }, z.number().positive()),
+  currency: nonEmptyString,
+  idempotencyKey: nonEmptyString.optional().nullable(),
+});
+
+export const paymentProviderWebhookSchema = z.object({
+  paymentAttemptId: nonEmptyString,
+  status: z.enum([
+    PaymentStatus.SUCCESS,
+    PaymentStatus.FAILED,
+    PaymentStatus.CANCELLED,
+    PaymentStatus.REJECTED,
+  ]),
+  failureReason: z.string().trim().optional().nullable(),
+});

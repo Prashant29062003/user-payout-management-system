@@ -1,13 +1,16 @@
 import { ApiResponse } from '../shared/utils/api-response.js';
-import { ValidationError } from '../shared/errors/index.js';
 import { advancePayoutWorkflow, saleReconciliationWorkflow, withdrawalWorkflow } from '../modules/workflows/index.js';
-import { requireEnumValue, requireOptionalString, requirePositiveNumber, requireString } from '../shared/validators.js';
-
-const validReconciliationActions = ['approve', 'reject'];
+import {
+  parseSchema,
+  advancePayoutBodySchema,
+  reconcileSaleBodySchema,
+  saleIdParamsSchema,
+  createWithdrawalBodySchema,
+} from '../shared/validators.js';
 
 export async function runAdvancePayout(req, res, next) {
   try {
-    const saleId = requireString(req.body.saleId, 'saleId');
+    const { saleId } = parseSchema(advancePayoutBodySchema, req.body);
     const result = await advancePayoutWorkflow.execute(saleId);
     res.status(201).json(ApiResponse.success(result, 'Advance payout processed'));
   } catch (error) {
@@ -17,8 +20,8 @@ export async function runAdvancePayout(req, res, next) {
 
 export async function reconcileSale(req, res, next) {
   try {
-    const saleId = requireString(req.params.saleId, 'saleId');
-    const action = requireEnumValue(req.body.action, validReconciliationActions, 'action');
+    const { saleId } = parseSchema(saleIdParamsSchema, req.params);
+    const { action } = parseSchema(reconcileSaleBodySchema, req.body);
 
     const result = action === 'approve'
       ? await saleReconciliationWorkflow.approveSale(saleId)
@@ -32,19 +35,8 @@ export async function reconcileSale(req, res, next) {
 
 export async function createWithdrawal(req, res, next) {
   try {
-    const accountId = requireString(req.body.accountId, 'accountId');
-    const userId = requireString(req.body.userId, 'userId');
-    const amount = requirePositiveNumber(req.body.amount, 'amount');
-    const currency = requireString(req.body.currency, 'currency');
-    const idempotencyKey = requireOptionalString(req.body.idempotencyKey, 'idempotencyKey');
-
-    const result = await withdrawalWorkflow.execute({
-      accountId,
-      userId,
-      amount,
-      currency,
-      idempotencyKey,
-    });
+    const withdrawalData = parseSchema(createWithdrawalBodySchema, req.body);
+    const result = await withdrawalWorkflow.execute(withdrawalData);
 
     res.status(201).json(ApiResponse.success(result, 'Withdrawal request processed'));
   } catch (error) {

@@ -5,23 +5,14 @@ import { withdrawalService } from '../modules/withdrawals/index.js';
 import { ledgerService } from '../modules/ledger/index.js';
 import { recoveryWorkflow } from '../modules/workflows/index.js';
 import { withTransaction } from '../shared/utils/index.js';
-import { PaymentStatus, WithdrawalStatus, LedgerEntryType } from '../shared/constants/index.js';
-import { requireEnumValue, requirePositiveNumber, requireString } from '../shared/validators.js';
-
-const validWebhookStatuses = [
-  PaymentStatus.SUCCESS,
-  PaymentStatus.FAILED,
-  PaymentStatus.CANCELLED,
-  PaymentStatus.REJECTED,
-];
+import { LedgerEntryType } from '../shared/constants/index.js';
+import { parseSchema, paymentProviderWebhookSchema } from '../shared/validators.js';
 
 export async function handlePaymentProviderWebhook(req, res, next) {
   try {
-    const paymentAttemptId = requireString(req.body.paymentAttemptId, 'paymentAttemptId');
-    const status = requireEnumValue(req.body.status, validWebhookStatuses, 'status');
-    const failureReason = req.body.failureReason;
+    const { paymentAttemptId, status, failureReason } = parseSchema(paymentProviderWebhookSchema, req.body);
 
-    if (status === PaymentStatus.SUCCESS) {
+    if (status === 'SUCCESS') {
       const result = await withTransaction(async (tx) => {
         const paymentAttempt = await paymentAttemptService.markSucceeded(paymentAttemptId, tx);
         if (!paymentAttempt.withdrawalId) {
