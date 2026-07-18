@@ -27,13 +27,14 @@ The system is designed with a focus on **financial correctness, auditability, id
 * Final settlement calculation
 * Negative adjustment for rejected sales
 * Immutable append-only financial ledger
+* Centralized balance projection service
 * Withdrawable balance projection
 * One withdrawal per rolling 24-hour window
 * Concurrent withdrawal protection
 * External payment provider integration
+* Payment attempt history and idempotent retries
 * Payment failure handling
 * Failed payout recovery
-* Idempotent webhook processing
 * Transactional financial operations
 * Audit-friendly financial history
 
@@ -213,10 +214,11 @@ The major logical modules are:
 * **User Module** — manages affiliate users.
 * **Account Module** — manages financial accounts and balance projections.
 * **Sale Module** — manages sale creation and lifecycle.
-* **Payout Module** — manages advance payouts and final settlements.
-* **Ledger Module** — manages immutable financial records.
+* **Advance Payout Module** — manages advance payout eligibility and lifecycle.
 * **Withdrawal Module** — manages withdrawal requests and restrictions.
-* **Payment Provider Module** — isolates external payment provider integration.
+* **PaymentAttempt Module** — manages provider attempt history and idempotent retries.
+* **Ledger Module** — manages immutable financial records and projection updates.
+* **Projection Service** — centralizes withdrawable and recovery balance routing.
 
 ---
 
@@ -248,36 +250,40 @@ user-payout-management-system/
 │   ├── 03-system-design.md
 │   ├── 04-database-design.md
 │   ├── 05-api-design.md
-│   ├── 06-class-design.md
-│   ├── 07-workflows.md
-│   ├── 08-edge-cases.md
-│   └── 09-design-decisions.md
+│   ├── 06-state-machines.md
+│   ├── 07-financial-and-ledger-flows.md
+│   ├── 08-concurrency-and-idempotency.md
+│   ├── 09-error-handling-and-failure-recovery.md
+│   ├── 10-security-and-access-control.md
+│   ├── 11-implementation-plan.md
+│   ├── 12-testing-strategy.md
+│   ├── 13-local-development.md
+│   ├── 14-deployment-and-operations.md
+│   └── 15-observability-and-monitoring.md
 │
 ├── src/
-│   ├── modules/
-│   │   ├── users/
-│   │   ├── accounts/
-│   │   ├── sales/
-│   │   ├── payouts/
-│   │   ├── withdrawals/
-│   │   ├── ledger/
-│   │   └── payment-provider/
-│   │
-│   ├── database/
-│   ├── middleware/
 │   ├── config/
-│   └── app.js
+│   ├── modules/
+│   │   ├── accounts/
+│   │   ├── advance-payouts/
+│   │   ├── ledger/
+│   │   ├── payment-attempts/
+│   │   ├── sales/
+│   │   ├── users/
+│   │   └── withdrawals/
+│   ├── shared/
+│   ├── app.js
+│   └── index.js
 │
 ├── tests/
-│   ├── unit/
-│   └── integration/
+│   └── modules/
 │
-├── migrations/
+├── prisma/
 │
 ├── .env.example
 ├── .gitignore
 ├── package.json
-└── docker-compose.yml
+└── Dockerfile
 ```
 
 ---
@@ -290,13 +296,19 @@ The detailed design and implementation decisions are documented separately:
 | ----------------------------------------------- | --------------------------------------------------------------- |
 | [Requirements](docs/01-requirements.md)         | Functional requirements, actors, business rules, and invariants |
 | [Domain Model](docs/02-domain-model.md)         | Core entities, responsibilities, relationships, and lifecycles  |
-| [System Design](docs/03-system-design.md)       | Architecture, modules, transactions, and concurrency strategy   |
+| [System Design](docs/03/system-design.md)       | Architecture, modules, transactions, and concurrency strategy   |
 | [Database Design](docs/04-database-design.md)   | Database schema, relationships, constraints, and indexes        |
 | [API Design](docs/05-api-design.md)             | REST API endpoints, requests, responses, and errors             |
-| [Class Design](docs/06-class-design.md)         | Controllers, services, repositories, and interfaces             |
-| [Workflows](docs/07-workflows.md)               | Advance payout, reconciliation, withdrawal, and recovery flows  |
-| [Edge Cases](docs/08-edge-cases.md)             | Failure scenarios, race conditions, retries, and idempotency    |
-| [Design Decisions](docs/09-design-decisions.md) | Architectural choices and trade-offs                            |
+| [State Machines](docs/06-state-machines.md)     | Lifecycle and valid state transitions for domain entities      |
+| [Financial & Ledger Flows](docs/07-financial-and-ledger-flows.md) | Ledger and balance projection flows                          |
+| [Concurrency & Idempotency](docs/08-concurrency-and-idempotency.md) | Race conditions, retries, and idempotency                    |
+| [Error Handling & Failure Recovery](docs/09-error-handling-and-failure-recovery.md) | Failure scenarios and recovery logic    |
+| [Security & Access Control](docs/10-security-and-access-control.md) | Authentication, authorization, and access control          |
+| [Implementation Plan](docs/11-implementation-plan.md) | Roadmap, phases, and development strategy                     |
+| [Testing Strategy](docs/12-testing-strategy.md) | Test plan, coverage, and verification strategy                  |
+| [Local Development](docs/13-local-development.md) | Local setup and developer workflow                            |
+| [Deployment & Operations](docs/14-deployment-and-operations.md) | Deployment and production operations                         |
+| [Observability & Monitoring](docs/15-observability-and-monitoring.md) | Logging, metrics, and monitoring                              |
 
 ---
 
