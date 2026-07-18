@@ -29,6 +29,10 @@ export class AccountRepository {
       },
     });
   }
+
+  async updateBalances(id, balances) {
+    return this.tx.account.update({ where: { id }, data: balances });
+  }
 }
 
 export const accountRepository = new AccountRepository();
