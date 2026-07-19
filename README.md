@@ -268,7 +268,8 @@ user-payout-management-system/
 │   ├── 12-testing-strategy.md
 │   ├── 13-local-development.md
 │   ├── 14-deployment-and-operations.md
-│   └── 15-observability-and-monitoring.md
+│   ├── 15-observability-and-monitoring.md
+│   └── 16-phase-7-payment-provider.md
 │
 ├── src/
 │   ├── config/
